@@ -36,5 +36,6 @@
         "test",
         "demo",
         "src"
-    ]
+    ],
+    "main": "dist/znkIap.js"
 }
