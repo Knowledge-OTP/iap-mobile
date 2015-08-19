@@ -6,16 +6,17 @@
         function ($q, $rootScope, $injector, ENV) {
             var InAppPurchaseHelperSrv = {};
             var IAP_PATH = 'iap';
+            var firebaseAppScopeName = ENV.firebaseAppScopeName;
 
             InAppPurchaseHelperSrv.getProducts = function(){
                 //preventing dependency ins storageSrv
                 var StorageSrv = $injector.get('StorageSrv');
                 return StorageSrv.get(IAP_PATH).then(function(iapObj){
-                    if(!iapObj.products || !iapObj.products[ENV.firebaseAppScopeName] || !iapObj.products[ENV.firebaseAppScopeName].length){
+                    if(!iapObj.products || !iapObj.products[firebaseAppScopeName] || !iapObj.products[firebaseAppScopeName].length){
                         console.error('Failed to retrieve products from db');
                         return $q.reject('Failed to retrieve products from db');
                     }
-                    return iapObj.products[ENV.firebaseAppScopeName];
+                    return iapObj.products[firebaseAppScopeName];
                 });
             };
 
@@ -24,7 +25,7 @@
                 var StorageSrv = $injector.get('StorageSrv');
                 var SUBSCRIPTIONS_PATH = StorageSrv.globalUserSpacePath.concat(['subscriptions']);
                 return StorageSrv.get(SUBSCRIPTIONS_PATH).then(function(subscriptionObj){
-                    return subscriptionObj.sat ? new Date(subscriptionObj.sat) : null;
+                    return subscriptionObj[firebaseAppScopeName] ? new Date(subscriptionObj[firebaseAppScopeName]) : null;
                 });
             };
 
