@@ -29,7 +29,7 @@
                 //preventing dependency ins storageSrv
                 var StorageSrv = $injector.get('StorageSrv');
                 var SUBSCRIPTIONS_PATH = StorageSrv.globalUserSpacePath.concat(['subscriptions']);
-                StorageSrv.get(SUBSCRIPTIONS_PATH).then(function(subscriptionObj){
+                return StorageSrv.get(SUBSCRIPTIONS_PATH).then(function(subscriptionObj){
                     return subscriptionObj.sat ? new Date(subscriptionObj.sat) : null;
                 });
             };
