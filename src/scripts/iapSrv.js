@@ -1,4 +1,4 @@
-(function (angular) {
+(function (angular,ionic) {
     'use strict';
 
     angular.module('znk.iap').provider('IapSrv', function QuestionTypesProvider() {
@@ -28,7 +28,7 @@
 
                 IapSrv.init = function init() {
                     var productsProm = InAppPurchaseHelperSrv.getProducts();
-                    productsProm.catch(function(err){
+                    productsProm.catch(function(){
                         return _availProductsFallback;
                     }).then(function (productsArr) {
                         productsArr.forEach(function (product) {
@@ -267,4 +267,4 @@
             }
         ];
     });
-})(angular);
+})(angular,ionic);
