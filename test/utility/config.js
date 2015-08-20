@@ -5,7 +5,7 @@
         {'appStoreId':'app.store.fallback2.sub3months','appStoreType':'paid subscription','length':3, 'playStoreUid':'play.store.fallback2.sub3mont', 'playStoreType':'consumable'}
     ];
 
-    angular.module('test', ['znk.iap']).config(function(IapSrvProvider){
-        IapSrvProvider.setAvailProductsFallback(availProductsFallback );
+    angular.module('test', ['cordova-iap']).config(function(IapSrvProvider){
+        IapSrvProvider.setProductsFallback(availProductsFallback );
     }).constant('availProductsFallback',availProductsFallback );
 })(angular);

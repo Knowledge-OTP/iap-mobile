@@ -1,3 +1,3 @@
 ## Testing
 
-Running `grunt test` will run the unit tests with karma.
+The dist directory is the package content when used as a dependency used by other apps, so remember to run grunt build    

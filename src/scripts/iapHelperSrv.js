@@ -1,7 +1,7 @@
 (function (angular) {
     'use strict';
 
-    angular.module('znk.iap').factory('InAppPurchaseHelperSrv', [
+    angular.module('cordova-iap').factory('InAppPurchaseHelperSrv', [
         '$q', '$rootScope', '$injector', 'ENV',
         function ($q, $rootScope, $injector, ENV) {
             var InAppPurchaseHelperSrv = {};

@@ -1,13 +1,13 @@
 (function (angular) {
     'use strict';
 
-    angular.module('znk.iap', []);
+    angular.module('cordova-iap', []);
 })(angular);
 
 (function (angular) {
     'use strict';
 
-    angular.module('znk.iap').factory('InAppPurchaseHelperSrv', [
+    angular.module('cordova-iap').factory('InAppPurchaseHelperSrv', [
         '$q', '$rootScope', '$injector', 'ENV',
         function ($q, $rootScope, $injector, ENV) {
             var InAppPurchaseHelperSrv = {};
@@ -115,9 +115,9 @@
 (function (angular,ionic) {
     'use strict';
 
-    angular.module('znk.iap').provider('IapSrv', function QuestionTypesProvider() {
+    angular.module('cordova-iap').provider('IapSrv', function QuestionTypesProvider() {
         var _availProductsFallback;
-        this.setAvailProductsFallback = function(availProductsFallback){
+        this.setProductsFallback = function(availProductsFallback){
             _availProductsFallback = availProductsFallback;
         };
 
