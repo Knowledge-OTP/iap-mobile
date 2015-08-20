@@ -22,7 +22,8 @@ module.exports = function (grunt) {
     // Configurable paths for the application
     var appConfig = {
         src: 'src',
-        dist: 'dist'
+        dist: 'dist',
+        appName: 'cordova-iap'
     };
 
     // Define the configuration for all the tasks
@@ -87,13 +88,13 @@ module.exports = function (grunt) {
         concat: {
             dist: {
                 src: ['<%= yeoman.src %>/scripts/core/*.*', '<%= yeoman.src %>/scripts/*.*'],
-                dest: '<%= yeoman.dist %>/znkIap.js'
+                dest: '<%= yeoman.dist %>/<%= yeoman.appName %>.js'
             }
         },
         uglify: {
             dist: {
                 files: {
-                    '<%= yeoman.dist %>/znkIap.min.js': '<%= yeoman.dist %>/znkIap.js'
+                    '<%= yeoman.dist %>/<%= yeoman.appName %>.min.js': '<%= yeoman.dist %>/<%= yeoman.appName %>.js'
                 }
             }
         },
