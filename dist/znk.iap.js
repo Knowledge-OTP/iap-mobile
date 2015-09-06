@@ -39,12 +39,12 @@
                 if(angular.isUndefined(date)){
                     return;
                 }
-
-                return InAppPurchaseHelperSrv.getUserSubscription().then(function(subscriptionObj){
-                    //preventing dependency ins storageSrv
-                    var StorageSrv = $injector.get('StorageSrv');
-                    var SUBSCRIPTIONS_PATH = StorageSrv.globalUserSpacePath.concat(['subscriptions']);
-                    subscriptionObj.sat = date.getTime();
+                //preventing dependency ins storageSrv
+                var StorageSrv = $injector.get('StorageSrv');
+                var SUBSCRIPTIONS_PATH = StorageSrv.globalUserSpacePath.concat(['subscriptions']);
+                
+                return StorageSrv.get(SUBSCRIPTIONS_PATH).then(function(subscriptionObj){
+                    subscriptionObj[firebaseAppScopeName] = date.getTime();
                     StorageSrv.set(SUBSCRIPTIONS_PATH, subscriptionObj);
                 });
 
@@ -281,7 +281,7 @@
                             $window.facebookConnectPlugin.logEvent('Purchased', {
                                 NumItems: 1,
                                 Currency: 'USD',
-                                ContentType: 'zinkerzsat',
+                                ContentType: 'zinkerz',
                                 ContentID: productId
                             }, null, function () {
                             }, function () {

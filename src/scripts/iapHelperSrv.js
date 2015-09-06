@@ -33,10 +33,10 @@
                 if(angular.isUndefined(date)){
                     return;
                 }
-
-                var SUBSCRIPTIONS_PATH = StorageSrv.globalUserSpacePath.concat(['subscriptions']);
                 //preventing dependency ins storageSrv
                 var StorageSrv = $injector.get('StorageSrv');
+                var SUBSCRIPTIONS_PATH = StorageSrv.globalUserSpacePath.concat(['subscriptions']);
+                
                 return StorageSrv.get(SUBSCRIPTIONS_PATH).then(function(subscriptionObj){
                     subscriptionObj[firebaseAppScopeName] = date.getTime();
                     StorageSrv.set(SUBSCRIPTIONS_PATH, subscriptionObj);
