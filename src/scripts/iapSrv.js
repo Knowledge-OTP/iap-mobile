@@ -197,7 +197,7 @@
                     function verified(product) {
                         console.log('verified');
                         $analytics.eventTrack('purchase-verified', {category: 'purchase', label: 'verified'});
-                        var addTransactionProm = InAppPurchaseHelperSrv.addTransaction(product);
+                        var addTransactionProm = InAppPurchaseHelperSrv.addTransaction(angular.copy(product));
                         addTransactionProm.then(function (newExpiryDate) {
                             if (!newExpiryDate) {
                                 return;
