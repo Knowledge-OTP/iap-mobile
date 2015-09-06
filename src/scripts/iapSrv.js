@@ -167,7 +167,7 @@
                             $window.facebookConnectPlugin.logEvent('Purchased', {
                                 NumItems: 1,
                                 Currency: 'USD',
-                                ContentType: 'zinkerzsat',
+                                ContentType: 'zinkerz',
                                 ContentID: productId
                             }, null, function () {
                             }, function () {

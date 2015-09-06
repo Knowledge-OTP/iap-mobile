@@ -34,11 +34,11 @@
                     return;
                 }
 
-                return InAppPurchaseHelperSrv.getUserSubscription().then(function(subscriptionObj){
-                    //preventing dependency ins storageSrv
-                    var StorageSrv = $injector.get('StorageSrv');
-                    var SUBSCRIPTIONS_PATH = StorageSrv.globalUserSpacePath.concat(['subscriptions']);
-                    subscriptionObj.sat = date.getTime();
+                var SUBSCRIPTIONS_PATH = StorageSrv.globalUserSpacePath.concat(['subscriptions']);
+                //preventing dependency ins storageSrv
+                var StorageSrv = $injector.get('StorageSrv');
+                return StorageSrv.get(SUBSCRIPTIONS_PATH).then(function(subscriptionObj){
+                    subscriptionObj[firebaseAppScopeName] = date.getTime();
                     StorageSrv.set(SUBSCRIPTIONS_PATH, subscriptionObj);
                 });
 
