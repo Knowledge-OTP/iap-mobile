@@ -23,7 +23,7 @@ module.exports = function (grunt) {
     var appConfig = {
         src: 'src',
         dist: 'dist',
-        appName: 'cordova-iap'
+        appName: 'znk.iap'
     };
 
     // Define the configuration for all the tasks
