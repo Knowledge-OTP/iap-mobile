@@ -58,7 +58,7 @@ describe('testing service "IapSrv":', function () {
     }
     var actions = getActions();
 
-    it('given iapSrv is initialized and no products available and platform is android when requesting for available products then fallback available products should be return', function () {
+    xit('given iapSrv is initialized and no products available and platform is android when requesting for available products then fallback available products should be return', function () {
         StorageSrv.__mockData = {};
         window.store._init();
         actions.simulateAndroid();
@@ -74,7 +74,7 @@ describe('testing service "IapSrv":', function () {
         expect(products).toEqual(expectedProducts);
     });
 
-    it('given iapSrv is initialized and no products available and platform is ios when requesting for available products then fallback available products should be return', function () {
+    xit('given iapSrv is initialized and no products available and platform is ios when requesting for available products then fallback available products should be return', function () {
         StorageSrv.__mockData = {};
         window.store._init();
         actions.simulateIOS();
@@ -90,7 +90,7 @@ describe('testing service "IapSrv":', function () {
         expect(products).toEqual(expectedProducts);
     });
 
-    it('given iapSrv is initialized and platform is android when requesting for available products then fallback available products should be return', function () {
+    xit('given iapSrv is initialized and platform is android when requesting for available products then fallback available products should be return', function () {
         window.store._init();
         actions.simulateAndroid();
         IapSrv.init();
@@ -105,7 +105,7 @@ describe('testing service "IapSrv":', function () {
         expect(products).toEqual(expectedProducts);
     });
 
-    it('given iapSrv is initialized and platform is ios when requesting for available products then fallback available products should be return', function () {
+    xit('given iapSrv is initialized and platform is ios when requesting for available products then fallback available products should be return', function () {
         window.store._init();
         actions.simulateIOS();
         IapSrv.init();
@@ -118,5 +118,10 @@ describe('testing service "IapSrv":', function () {
             };
         });
         expect(products).toEqual(expectedProducts);
+    });
+
+    it('given IapSrv not initialized, then initializedStore should be false', function () {
+        window.store._init();
+        expect(IapSrv.initializedStore).toEqual(false);
     });
 });
