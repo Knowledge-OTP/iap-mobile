@@ -66,7 +66,7 @@ module.exports = function (config) {
         // - IE (only Windows)
         browsers: [
             'Chrome',
-            'Safari'
+            //'Safari'
         ],
 
         // Which plugins to enable
