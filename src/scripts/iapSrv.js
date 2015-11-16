@@ -1,7 +1,6 @@
 (function (angular) {
     'use strict';
 
-    //----------NEW--------------
     angular.module('znk.iap').provider('IapSrv',[function () {
         
         var productsGetter;
@@ -10,7 +9,6 @@
         this.setProductsFallback = function(availProductsFallback){
             _availProductsFallback = availProductsFallback;
         };
-
 
         this.registerProducts = function(fnOrArr){
             productsGetter = fnOrArr;
@@ -26,6 +24,7 @@
 
                 var isOnline = !!($window.navigator && $window.navigator.onLine);
                 var validatorFunc;
+                var isWeb = !$window.cordova;
                 
                 var PURCHASED_EVENT = 'iap:purchased';
                 var STORE_PRODUCT_UPDATED_EVENT = 'iap:productUpdated';
@@ -44,8 +43,15 @@
                     purchaseInProgressProm: undefined
                 };
 
-                function _getStoreProducts(){
-                    console.log('_getStoreProducts');
+                function _getValidatorFunc(){
+                    if (!validatorFunc){
+                        validatorFunc = $injector.invoke(validatorFuncRef);
+                    }
+                    return validatorFunc;
+                }
+
+                function _getAppProducts(){
+                    console.log('_getAppProducts');
                     return $injector.invoke(productsGetter);
                 }
 
@@ -57,26 +63,70 @@
                     return iapSrv.loadingError;
                 };
 
-                iapSrv.getProducts = function () {
-                    if (!isOnline) {
-                        return $q.reject('No Internet connection');                        
-                    }
-
-                    //TODO - ASSAF - CHECK if store loaded, maybe refresh store
-                    if (!iapSrv.isStoreLoaded){
-                        return $q.reject('store not loaded');
-                    }
-
-                    var productsArr=[];
-                    iapSrv.appProductsArr.forEach(function (appProduct){
-                        productsArr.push(iapSrv.products[appProduct.id]);
+                iapSrv.getAppProduct = function(productId){
+                    iapSrv.appProductsArr.forEach(function(appProduct){
+                        if (appProduct.id === productId){
+                            return appProduct;
+                        }
                     });
-
-                    return $q.when(productsArr);
                 };
+
+                iapSrv.getStoreProduct = function(productId){
+                    return iapSrv.products[productId];
+                };
+
+                iapSrv.getStoreProducts = function(){
+                    // if (!isOnline) {
+                    //     return $q.reject('No Internet connection');                        
+                    // }
+
+                    var storeProductsArr = [];
+                    for(var propertyName in iapSrv.products) {
+                        storeProductsArr.push(angular.copy(iapSrv.products[propertyName]));
+                    }
+                    return storeProductsArr;
+                };
+                
+                // iapSrv.getProducts = function () {
+                //     if (!isOnline) {
+                //         return $q.reject('No Internet connection');                        
+                //     }
+
+                //     //TODO - ASSAF - CHECK if store loaded, maybe refresh store
+                //     if (!iapSrv.isStoreLoaded){
+                //         return $q.reject('store not loaded');
+                //     }
+
+                //     var productsArr=[];
+                //     iapSrv.appProductsArr.forEach(function (appProduct){
+                //         productsArr.push(iapSrv.products[appProduct.id]);
+                //     });
+
+                //     return $q.when(productsArr);
+                // };
 
 
                 iapSrv.purchase = function(productId){
+
+                    if (isWeb){
+                        var validator = _getValidatorFunc();
+                        var mockProductForWeb = {};
+
+                        angular.extend(mockProductForWeb, iapSrv.getAppProduct(productId), { 
+                            transaction: 'demo'
+                        });
+
+                        validator(mockProductForWeb).then(function(product){
+                            console.log('mock purchase completed, product:' + product.id);
+                            $rootScope.$broadcast(PURCHASED_EVENT, product.id);
+                        })
+                        .catch(function(err){
+                            console.log('error in purchase, err: ' + err);
+                        });
+                        return;
+                    }
+
+
                     iapSrv.purchaseInProgressProm = $q.defer();
                     iapSrv.isShowingModal=true;
                     var product = iapSrv.products[productId];
@@ -127,7 +177,7 @@
                         }); 
                     }
                     return iapSrv.purchaseInProgressProm.promise;
-                }; 
+                };
 
                 //TODO - protect by promise, two simaltonasily will crash the app
                 iapSrv.refreshStore = function refreshStore(){
@@ -146,17 +196,9 @@
                     }
                 };
 
-                function _getValidatorFunc(){
-                    if (!validatorFunc){
-                        validatorFunc = $injector.invoke(validatorFuncRef);
-                    }
-                    return validatorFunc;
-                }
-
-
-                function initStoreProducts(){
-                    console.log('idgit statnit store products');
-                    return _getStoreProducts();
+                function initAppProductsForStore(){
+                    console.log('init app products for the store');
+                    return _getAppProducts();
                 }
 
                 /////////////////////////////
@@ -166,6 +208,17 @@
                 /////////////////////////////
                 iapSrv.initStore = function initStore(){
 
+                    if (isWeb){
+                        initAppProductsForStore().then(function(appProductsArr){
+                            iapSrv.appProductsArr = appProductsArr;
+                            console.log('app products loaded');
+                        })
+                        .catch(function(err) {
+                            console.error('failed to load app products, err:' + err);
+                        });
+                        return;
+                    }
+                    
                     if (!$window.store){
                         console.log('store is not available');
                         iapSrv.loadingError = true;
@@ -189,13 +242,13 @@
 
                     });
 
-                    var initStoreProductsProm = initStoreProducts();
-                    initStoreProductsProm.catch(function () {
+                    var initAppProductsForStoreProm = initAppProductsForStore();
+                    initAppProductsForStoreProm.catch(function () {
                         iapSrv.loadingError = true;
                         return;
                     });
-                    initStoreProductsProm.then(function (storeProductsArr) {
-                        iapSrv.appProductsArr = storeProductsArr;
+                    initAppProductsForStoreProm.then(function (appProductsArr) {
+                        iapSrv.appProductsArr = appProductsArr;
                         console.log('app products loaded');
 
                         if (!iapSrv.initializedStore){
