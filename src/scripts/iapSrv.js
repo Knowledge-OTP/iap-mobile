@@ -64,11 +64,11 @@
                 };
 
                 iapSrv.getAppProduct = function(productId){
-                    iapSrv.appProductsArr.forEach(function(appProduct){
-                        if (appProduct.id === productId){
-                            return appProduct;
+                    for (var i = 0; i < iapSrv.appProductsArr.length; i++) { 
+                        if (iapSrv.appProductsArr[i].id === productId){
+                            return iapSrv.appProductsArr[i];
                         }
-                    });
+                    };
                 };
 
                 iapSrv.getStoreProduct = function(productId){
@@ -108,26 +108,37 @@
 
                 iapSrv.purchase = function(productId){
 
+                    iapSrv.purchaseInProgressProm = $q.defer();
+
                     if (isWeb){
                         var validator = _getValidatorFunc();
                         var mockProductForWeb = {};
+                        var appProduct = iapSrv.getAppProduct(productId);
 
-                        angular.extend(mockProductForWeb, iapSrv.getAppProduct(productId), { 
-                            transaction: 'demo'
+                        angular.extend(mockProductForWeb, appProduct, { 
+                            transaction: {'id':'demo'}
                         });
 
-                        validator(mockProductForWeb).then(function(product){
-                            console.log('mock purchase completed, product:' + product.id);
-                            $rootScope.$broadcast(PURCHASED_EVENT, product.id);
+                        validator(mockProductForWeb).then(function(res){
+                            if (res){
+                                console.log('mock purchase completed');
+                                $rootScope.$broadcast(PURCHASED_EVENT, appProduct.id);
+                                iapSrv.purchaseInProgressProm.resolve(appProduct);
+                            }
+                            else{
+                                console.log('error in validating purchase');
+                                iapSrv.purchaseInProgressProm.reject(err);
+                            }
                         })
                         .catch(function(err){
                             console.log('error in purchase, err: ' + err);
+                            iapSrv.purchaseInProgressProm.reject(err);
                         });
-                        return;
+                        return iapSrv.purchaseInProgressProm.promise;
                     }
 
 
-                    iapSrv.purchaseInProgressProm = $q.defer();
+                    
                     iapSrv.isShowingModal=true;
                     var product = iapSrv.products[productId];
 
@@ -275,21 +286,26 @@
 
                                     var validator = _getValidatorFunc();
 
-                                    validator(product).then(function(product){
-                                        callback(true, {});
-                                        if (iapSrv.isShowingModal){
-                                            $ionicLoading.show({
-                                                template: 'purchase verified'
-                                            });
-                                            $timeout(function(){
-                                                $ionicLoading.hide();
-                                            }, 2000);
+                                    validator(product).then(function(res){
+                                        if (res){
+                                            callback(true, product);
+                                            if (iapSrv.isShowingModal){
+                                                $ionicLoading.show({
+                                                    template: 'purchase verified'
+                                                });
+                                                $timeout(function(){
+                                                    $ionicLoading.hide();
+                                                }, 2000);
+                                            }
+                                            $rootScope.$broadcast(PURCHASED_EVENT, product.id);
                                         }
-
-                                        $rootScope.$broadcast(PURCHASED_EVENT, product.id);
+                                        else{
+                                            console.error('error in store validator');
+                                            callback(false, "Impossible to proceed with validation");
+                                        }
                                     }).catch(function(err){
-                                        console.log('error: ' + err);
-
+                                        console.error('error in store validator: ' + err);
+                                        callback(false, "Impossible to proceed with validation");
                                     });
                                 }
                             };
@@ -528,8 +544,16 @@
                 }
                 document.addEventListener('online', onlineHandler, false);
 
+                $timeout(function(){
+                    iapSrv.initStore();
+                },0);
+
                 return iapSrv;
             }
         ];
+
+
+
+
     }]);
 })(angular);
