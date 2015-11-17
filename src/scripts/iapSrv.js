@@ -49,7 +49,11 @@
                     isShowingModal: false,
                     currentErrorPopup: undefined,
                     isPurchasing: false,
-                    purchaseInProgressProm: undefined
+                    purchaseInProgressProm: undefined,
+                    iapErrorCodeEnum: {
+                          CANCELLED: 0,
+                          FAILED: 1
+                    }
                 };
 
                 function _getValidatorFunc(){
@@ -395,7 +399,7 @@
                                 $ionicLoading.hide();
                                 console.log('purchase cancelled');
                                 if (iapSrv.purchaseInProgressProm){
-                                    iapSrv.purchaseInProgressProm.reject('cancelled');
+                                    iapSrv.purchaseInProgressProm.reject(new Error([iapSrv.iapErrorCodeEnum.CANCELLED]));
                                 }
                             };
                             
