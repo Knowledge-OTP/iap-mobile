@@ -144,15 +144,15 @@
         };
 
         this.$get = [
-            '$window', '$q', '$injector', '$rootScope', '$filter', 'InAppPurchaseHelperSrv', 'ENV', '$analytics','$ionicLoading','$ionicPopup','$document','$timeout',
-            function ($window, $q, $injector, $rootScope, $filter, InAppPurchaseHelperSrv, ENV, $analytics, $ionicLoading, $ionicPopup, $document, $timeout) {
+            '$window', '$q', '$injector', '$filter', 'InAppPurchaseHelperSrv', 'ENV', '$analytics','$ionicLoading','$ionicPopup','$document','$timeout',
+            function ($window, $q, $injector, $filter, InAppPurchaseHelperSrv, ENV, $analytics, $ionicLoading, $ionicPopup, $document, $timeout) {
 
                 var isOnline = !!($window.navigator && $window.navigator.onLine);
                 var validatorFunc;
                 var isWeb = !$window.cordova;
                 
-                var PURCHASED_EVENT = 'iap:purchased';
-                var STORE_PRODUCT_UPDATED_EVENT = 'iap:productUpdated';
+                // var PURCHASED_EVENT = 'iap:purchased';
+                //var STORE_PRODUCT_UPDATED_EVENT = 'iap:productUpdated';
                 //var LOGIN_EVENT = 'auth:login';
 
                 var iapSrv = {
@@ -247,7 +247,7 @@
                         validator(mockProductForWeb).then(function(res){
                             if (res){
                                 console.log('mock purchase completed');
-                                $rootScope.$broadcast(PURCHASED_EVENT, appProduct.id);
+                                // $rootScope.$broadcast(PURCHASED_EVENT, appProduct.id);
                                 iapSrv.purchaseInProgressProm.resolve(appProduct);
                             }
                             else{
@@ -282,12 +282,12 @@
                                 iapSrv.currentErrorPopup.close();
                             }
 
-                            iapSrv.currentErrorPopup = $ionicPopup.alert({
-                                title: 'Error',
-                                template: 'There was an error with the purchase',
-                                okText: 'OK',
-                                okType: 'button-default'
-                            });
+                            // iapSrv.currentErrorPopup = $ionicPopup.alert({
+                            //     title: 'Error',
+                            //     template: 'There was an error with the purchase',
+                            //     okText: 'OK',
+                            //     okType: 'button-default'
+                            // });
 
                             iapSrv.currentErrorPopup.then(function(){
                                 iapSrv.currentErrorPopup = undefined;
@@ -300,12 +300,12 @@
                             iapSrv.currentErrorPopup.close();
                         }
 
-                        iapSrv.currentErrorPopup = $ionicPopup.alert({
-                            title: 'Error',
-                            template: 'There was an error with the product',
-                            okText: 'OK',
-                            okType: 'button-default'
-                        });
+                        // iapSrv.currentErrorPopup = $ionicPopup.alert({
+                        //     title: 'Error',
+                        //     template: 'There was an error with the product',
+                        //     okText: 'OK',
+                        //     okType: 'button-default'
+                        // });
 
                         iapSrv.currentErrorPopup.then(function(){
                             iapSrv.currentErrorPopup = undefined;
@@ -364,19 +364,19 @@
                         console.log('initializing store');
                     }
 
-                    var childScope = $rootScope.$new(true);
-                    childScope.$on(PURCHASED_EVENT,function(productId){
-                        console.log('purchased event, productId: ' + productId);
-                        if (iapSrv.isShowingModal){
-                            $ionicLoading.show({
-                                template: 'Thank you for your purchase !!!'
-                            });
-                            $timeout(function(){
-                                $ionicLoading.hide();
-                            }, 4000);
-                        }
+                    // var childScope = $rootScope.$new(true);
+                    // childScope.$on(PURCHASED_EVENT,function(productId){
+                    //     console.log('purchased event, productId: ' + productId);
+                    //     if (iapSrv.isShowingModal){
+                    //         $ionicLoading.show({
+                    //             template: 'Thank you for your purchase !!!'
+                    //         });
+                    //         $timeout(function(){
+                    //             $ionicLoading.hide();
+                    //         }, 4000);
+                    //     }
 
-                    });
+                    // });
 
                     var initAppProductsForStoreProm = initAppProductsForStore();
                     initAppProductsForStoreProm.catch(function () {
@@ -422,7 +422,7 @@
                                                     $ionicLoading.hide();
                                                 }, 2000);
                                             }
-                                            $rootScope.$broadcast(PURCHASED_EVENT, product.id);
+                                            // $rootScope.$broadcast(PURCHASED_EVENT, product.id);
                                         }
                                         else{
                                             console.error('error in store validator');
@@ -549,12 +549,12 @@
                             var purchaseCancelled = function purchaseCancelled(){
                                 $ionicLoading.hide();
                                 console.log('purchase cancelled');
-                                $ionicPopup.alert({
-                                    title: 'Error',
-                                    template: 'Your purhcase has been cancelled',
-                                    okText: 'Got it',
-                                    okType: 'button-default'
-                                });
+                                // $ionicPopup.alert({
+                                //     title: 'Error',
+                                //     template: 'Your purhcase has been cancelled',
+                                //     okText: 'Got it',
+                                //     okType: 'button-default'
+                                // });
                                 if (iapSrv.purchaseInProgressProm){
                                     iapSrv.purchaseInProgressProm.reject();
                                 }
@@ -582,7 +582,7 @@
                                 $window.store.when(appProduct.id).updated(function(product){
                                     console.log('product updated: ' + product.id);
                                     iapSrv.products[product.id] = product;
-                                    $rootScope.$broadcast(STORE_PRODUCT_UPDATED_EVENT);
+                                    //$rootScope.$broadcast(STORE_PRODUCT_UPDATED_EVENT);
                                                                    
                                 });
                             });
