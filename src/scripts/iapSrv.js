@@ -21,6 +21,7 @@
         
         this.setNoStoreMode = function(shouldEnableNoStoreMode){
             enableNoStoreMode = shouldEnableNoStoreMode;
+            console.log('IAP EnableNoStoreMode: ' + enableNoStoreMode);
         };
 
         this.$get = [
@@ -31,10 +32,6 @@
                 var validatorFunc;
                 var isWeb = !$window.cordova;
                 
-                // var PURCHASED_EVENT = 'iap:purchased';
-                //var STORE_PRODUCT_UPDATED_EVENT = 'iap:productUpdated';
-                //var LOGIN_EVENT = 'auth:login';
-
                 var iapSrv = {
                     initializedStore: false,
                     //store products, updated only by store update event handelr
@@ -92,25 +89,6 @@
                     return storeProductsArr;
                 };
                 
-                // iapSrv.getProducts = function () {
-                //     if (!isOnline) {
-                //         return $q.reject('No Internet connection');                        
-                //     }
-
-                //     //TODO - ASSAF - CHECK if store loaded, maybe refresh store
-                //     if (!iapSrv.isStoreLoaded){
-                //         return $q.reject('store not loaded');
-                //     }
-
-                //     var productsArr=[];
-                //     iapSrv.appProductsArr.forEach(function (appProduct){
-                //         productsArr.push(iapSrv.products[appProduct.id]);
-                //     });
-
-                //     return $q.when(productsArr);
-                // };
-
-
                 iapSrv.purchase = function(productId){
 
                     iapSrv.purchaseInProgressProm = $q.defer();
@@ -127,7 +105,6 @@
                         validator(mockProductForWeb).then(function(res){
                             if (res){
                                 console.log('mock purchase completed');
-                                // $rootScope.$broadcast(PURCHASED_EVENT, appProduct.id);
                                 iapSrv.purchaseInProgressProm.resolve(appProduct);
                             }
                             else{
@@ -162,13 +139,6 @@
                                 iapSrv.currentErrorPopup.close();
                             }
 
-                            // iapSrv.currentErrorPopup = $ionicPopup.alert({
-                            //     title: 'Error',
-                            //     template: 'There was an error with the purchase',
-                            //     okText: 'OK',
-                            //     okType: 'button-default'
-                            // });
-
                             iapSrv.currentErrorPopup.then(function(){
                                 iapSrv.currentErrorPopup = undefined;
                             });
@@ -179,13 +149,6 @@
                         if (iapSrv.currentErrorPopup){
                             iapSrv.currentErrorPopup.close();
                         }
-
-                        // iapSrv.currentErrorPopup = $ionicPopup.alert({
-                        //     title: 'Error',
-                        //     template: 'There was an error with the product',
-                        //     okText: 'OK',
-                        //     okType: 'button-default'
-                        // });
 
                         iapSrv.currentErrorPopup.then(function(){
                             iapSrv.currentErrorPopup = undefined;
@@ -244,20 +207,6 @@
                         console.log('initializing store');
                     }
 
-                    // var childScope = $rootScope.$new(true);
-                    // childScope.$on(PURCHASED_EVENT,function(productId){
-                    //     console.log('purchased event, productId: ' + productId);
-                    //     if (iapSrv.isShowingModal){
-                    //         $ionicLoading.show({
-                    //             template: 'Thank you for your purchase !!!'
-                    //         });
-                    //         $timeout(function(){
-                    //             $ionicLoading.hide();
-                    //         }, 4000);
-                    //     }
-
-                    // });
-
                     var initAppProductsForStoreProm = initAppProductsForStore();
                     initAppProductsForStoreProm.catch(function () {
                         iapSrv.loadingError = true;
@@ -303,7 +252,6 @@
                                                     $ionicLoading.hide();
                                                 }, 2000);
                                             }
-                                            // $rootScope.$broadcast(PURCHASED_EVENT, product.id);
                                         }
                                         else{
                                             console.error('error in store validator');
@@ -326,16 +274,7 @@
 
                             iapSrv.appProductsArr.forEach(function (appProduct){
 
-                                //TODO - Assaf - check if product is already registered
-                                // if (_store.get(product.alias)) {
-                                //     return;
-                                // }
-
                                 console.log('registering product: ' + JSON.stringify(appProduct));
-                                // console.log('id-' + appProduct.id);
-                                // console.log('alias-' + appProduct.alias);
-                                // console.log('type-' + appProduct.type);
-
                                 $window.store.register({
                                     id: appProduct.id,
                                     alias: appProduct.alias,
@@ -350,12 +289,6 @@
                             /////////////////////////////
 
                             var purchaseApproved = function purchaseApproved(product){
-                                if (iapSrv.isShowingModal){
-
-                                    $ionicLoading.show({
-                                        template: 'Purchase approved, validating...'
-                                    });
-                                }
                                 console.log('purchase approved');
                                 $analytics.eventTrack('purchase-approved', {category: 'purchase', label: 'approved'});
                                 product.verify();
@@ -432,12 +365,6 @@
                             var purchaseCancelled = function purchaseCancelled(){
                                 $ionicLoading.hide();
                                 console.log('purchase cancelled');
-                                // $ionicPopup.alert({
-                                //     title: 'Error',
-                                //     template: 'Your purhcase has been cancelled',
-                                //     okText: 'Got it',
-                                //     okType: 'button-default'
-                                // });
                                 if (iapSrv.purchaseInProgressProm){
                                     iapSrv.purchaseInProgressProm.reject();
                                 }
@@ -465,8 +392,6 @@
                                 $window.store.when(appProduct.id).updated(function(product){
                                     console.log('product updated: ' + product.id);
                                     iapSrv.products[product.id] = product;
-                                    //$rootScope.$broadcast(STORE_PRODUCT_UPDATED_EVENT);
-                                                                   
                                 });
                             });
 
