@@ -99,7 +99,11 @@
                         var appProduct = iapSrv.getAppProduct(productId);
 
                         angular.extend(mockProductForWeb, appProduct, { 
-                            transaction: {'id':'demo'}
+                            transaction: {
+                                id:'demo',
+                                price: '$0.99',
+                                title: 'buy'
+                            }
                         });
 
                         validator(mockProductForWeb).then(function(res){
