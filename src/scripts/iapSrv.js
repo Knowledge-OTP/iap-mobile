@@ -31,6 +31,13 @@
                 var isOnline = !!($window.navigator && $window.navigator.onLine);
                 var validatorFunc;
                 var isWeb = !$window.cordova;
+                var extendedProductMock = {
+                    transaction: {
+                        id:'demo'
+                    },
+                    price: '$0.99',
+                    title: 'buy'
+                };
                 
                 var iapSrv = {
                     initializedStore: false,
@@ -78,13 +85,24 @@
                 };
 
                 iapSrv.getStoreProducts = function(){
+
+                    var storeProductsArr = [];
+
                     // if (!isOnline) {
                     //     return $q.reject('No Internet connection');                        
                     // }
 
-                    var storeProductsArr = [];
-                    for(var propertyName in iapSrv.products) {
-                        storeProductsArr.push(angular.copy(iapSrv.products[propertyName]));
+                    if (enableNoStoreMode || isWeb){
+                        iapSrv.appProductsArr.forEach(function (appProduct){
+                            var mockProductForWeb = {};
+                            angular.extend(mockProductForWeb, appProduct, extendedProductMock);
+                            storeProductsArr.push(angular.copy(mockProductForWeb));
+                        });
+                    }
+                    else{
+                        for(var propertyName in iapSrv.products) {
+                            storeProductsArr.push(angular.copy(iapSrv.products[propertyName]));
+                        }
                     }
                     return storeProductsArr;
                 };
@@ -98,13 +116,7 @@
                         var mockProductForWeb = {};
                         var appProduct = iapSrv.getAppProduct(productId);
 
-                        angular.extend(mockProductForWeb, appProduct, { 
-                            transaction: {
-                                id:'demo',
-                                price: '$0.99',
-                                title: 'buy'
-                            }
-                        });
+                        angular.extend(mockProductForWeb, appProduct, extendedProductMock);
 
                         validator(mockProductForWeb).then(function(res){
                             if (res){
@@ -193,8 +205,13 @@
 
                     if (enableNoStoreMode || isWeb){
                         initAppProductsForStore().then(function(appProductsArr){
-                            iapSrv.appProductsArr = appProductsArr;
-                            console.log('app products loaded');
+                            if (angular.isArray(appProductsArr) && appProductsArr.length>0){
+                                iapSrv.appProductsArr = appProductsArr;
+                                console.log('app products loaded');
+                            }
+                            else{
+                                console.error('failed to load app products');
+                            }
                         })
                         .catch(function(err) {
                             console.error('failed to load app products, err:' + err);
@@ -212,14 +229,22 @@
                     }
 
                     var initAppProductsForStoreProm = initAppProductsForStore();
-                    initAppProductsForStoreProm.catch(function () {
+                    initAppProductsForStoreProm.catch(function (err) {
+                        console.error('failed to load app products, err:' + err);
                         iapSrv.loadingError = true;
                         return;
                     });
                     initAppProductsForStoreProm.then(function (appProductsArr) {
-                        iapSrv.appProductsArr = appProductsArr;
-                        console.log('app products loaded');
 
+                        if (angular.isArray(appProductsArr) && appProductsArr.length>0){
+                            iapSrv.appProductsArr = appProductsArr;
+                            console.log('app products loaded');
+                        }
+                        else{
+                            console.error('failed to load app products');
+                            return;
+                        }
+                        
                         if (!iapSrv.initializedStore){
                             iapSrv.initializedStore = true;
 
