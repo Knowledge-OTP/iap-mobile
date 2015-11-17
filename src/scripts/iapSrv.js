@@ -293,6 +293,7 @@
 
                                     validator(product).then(function(res){
                                         if (res){
+                                            iapSrv.purchaseInProgressProm.resolve(product);
                                             callback(true, product);
                                             if (iapSrv.isShowingModal){
                                                 $ionicLoading.show({
@@ -306,10 +307,12 @@
                                         }
                                         else{
                                             console.error('error in store validator');
+                                            iapSrv.purchaseInProgressProm.reject(false);
                                             callback(false, "Impossible to proceed with validation");
                                         }
                                     }).catch(function(err){
                                         console.error('error in store validator: ' + err);
+                                        iapSrv.purchaseInProgressProm.reject(err);
                                         callback(false, "Impossible to proceed with validation");
                                     });
                                 }
