@@ -366,7 +366,7 @@
                                 $ionicLoading.hide();
                                 console.log('purchase cancelled');
                                 if (iapSrv.purchaseInProgressProm){
-                                    iapSrv.purchaseInProgressProm.reject();
+                                    iapSrv.purchaseInProgressProm.reject('cancelled');
                                 }
                             };
                             
