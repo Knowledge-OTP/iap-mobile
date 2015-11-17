@@ -234,24 +234,21 @@
                                 if (InAppPurchaseHelperSrv.canUpgrade() && product.transaction){
                                     console.log('validator and transaction:' + JSON.stringify(product.transaction));
 
-                                    $ionicLoading.hide();
-
-                                    
-
                                     var validator = _getValidatorFunc();
 
                                     validator(product).then(function(res){
+                                        $ionicLoading.hide();
                                         if (res){
                                             iapSrv.purchaseInProgressProm.resolve(product);
                                             callback(true, product);
-                                            if (iapSrv.isShowingModal){
-                                                $ionicLoading.show({
-                                                    template: 'purchase verified'
-                                                });
-                                                $timeout(function(){
-                                                    $ionicLoading.hide();
-                                                }, 2000);
-                                            }
+                                            // if (iapSrv.isShowingModal){
+                                            //     $ionicLoading.show({
+                                            //         template: 'purchase verified'
+                                            //     });
+                                            //     $timeout(function(){
+                                            //         $ionicLoading.hide();
+                                            //     }, 2000);
+                                            // }
                                         }
                                         else{
                                             console.error('error in store validator');
@@ -263,6 +260,8 @@
                                         iapSrv.purchaseInProgressProm.reject(err);
                                         callback(false, "Impossible to proceed with validation");
                                     });
+
+
                                 }
                             };
 
@@ -339,9 +338,9 @@
 
                             var purchaseInitiated = function purchaseInitiated(){
                                 $ionicLoading.show({
-                                    template: 'Initiating purchase...'
+                                    template: 'Purchase is in progress...'
                                 });
-                                console.log('purchase initiated');
+                                console.log('Purchase is in progress...');
                             };
                             
                             /////////////////////////////
@@ -402,10 +401,10 @@
                             /////////////////////////////
 
                             $window.store.error(function(err){
+                                $ionicLoading.hide();
                                 if (iapSrv.purchaseInProgressProm){
                                     iapSrv.purchaseInProgressProm.reject(err);
                                 }
-                                $ionicLoading.hide();
                                 console.log('store error ' + err.code + ': ' + err.message);
                                 console.log('isShowingModal: ' + iapSrv.isShowingModal);
 
