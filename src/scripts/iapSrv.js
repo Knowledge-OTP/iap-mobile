@@ -399,7 +399,7 @@
                                 $ionicLoading.hide();
                                 console.log('purchase cancelled');
                                 if (iapSrv.purchaseInProgressProm){
-                                    iapSrv.purchaseInProgressProm.reject(new Error([iapSrv.iapErrorCodeEnum.CANCELLED]));
+                                    iapSrv.purchaseInProgressProm.reject(new Error([iapSrv.IapErrorCodeEnum.CANCELLED]));
                                 }
                             };
                             
