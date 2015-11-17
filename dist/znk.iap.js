@@ -155,7 +155,7 @@
                     transaction: {
                         id:'demo'
                     },
-                    price: '$0.99',
+                    price: '$30.99',
                     title: 'buy'
                 };
                 
