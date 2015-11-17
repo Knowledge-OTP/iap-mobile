@@ -215,6 +215,7 @@
                     if (enableNoStoreMode || isWeb){
                         iapSrv.appProductsArr.forEach(function (appProduct){
                             var mockProductForWeb = {};
+                            extendedProductMock.title=appProduct.id;
                             angular.extend(mockProductForWeb, appProduct, extendedProductMock);
                             storeProductsArr.push(angular.copy(mockProductForWeb));
                         });
