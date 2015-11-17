@@ -170,7 +170,7 @@
                     currentErrorPopup: undefined,
                     isPurchasing: false,
                     purchaseInProgressProm: undefined,
-                    iapErrorCodeEnum: {
+                    IapErrorCodeEnum: {
                           CANCELLED: 0,
                           FAILED: 1
                     }
