@@ -6,6 +6,7 @@
         var productsGetter;
         var validatorFuncRef;
         var _availProductsFallback;
+        var enableNoStoreMode;
         this.setProductsFallback = function(availProductsFallback){
             _availProductsFallback = availProductsFallback;
         };
@@ -16,6 +17,10 @@
 
         this.setValidator = function(func){
             validatorFuncRef = func;
+        };
+        
+        this.setNoStoreMode = function(shouldEnableNoStoreMode){
+            enableNoStoreMode = shouldEnableNoStoreMode;
         };
 
         this.$get = [
@@ -68,7 +73,7 @@
                         if (iapSrv.appProductsArr[i].id === productId){
                             return iapSrv.appProductsArr[i];
                         }
-                    };
+                    }
                 };
 
                 iapSrv.getStoreProduct = function(productId){
@@ -110,7 +115,7 @@
 
                     iapSrv.purchaseInProgressProm = $q.defer();
 
-                    if (isWeb){
+                    if (enableNoStoreMode || isWeb){
                         var validator = _getValidatorFunc();
                         var mockProductForWeb = {};
                         var appProduct = iapSrv.getAppProduct(productId);
@@ -127,7 +132,7 @@
                             }
                             else{
                                 console.log('error in validating purchase');
-                                iapSrv.purchaseInProgressProm.reject(err);
+                                iapSrv.purchaseInProgressProm.reject();
                             }
                         })
                         .catch(function(err){
@@ -191,21 +196,21 @@
                 };
 
                 //TODO - protect by promise, two simaltonasily will crash the app
-                iapSrv.refreshStore = function refreshStore(){
+                // iapSrv.refreshStore = function refreshStore(){
 
-                    if (InAppPurchaseHelperSrv.canUpgrade()){
-                        console.log('refresh store initiated');
-                        if (!iapSrv.initializedStore){
-                            iapSrv.initStore();
-                        }
-                        else{
-                            $window.store.refresh();
-                        }
-                    }
-                    else{
-                        console.log('user cannot upgrade at this time');
-                    }
-                };
+                //     if (InAppPurchaseHelperSrv.canUpgrade()){
+                //         console.log('refresh store initiated');
+                //         if (!iapSrv.initializedStore){
+                //             iapSrv.initStore();
+                //         }
+                //         else{
+                //             $window.store.refresh();
+                //         }
+                //     }
+                //     else{
+                //         console.log('user cannot upgrade at this time');
+                //     }
+                // };
 
                 function initAppProductsForStore(){
                     console.log('init app products for the store');
@@ -219,7 +224,7 @@
                 /////////////////////////////
                 iapSrv.initStore = function initStore(){
 
-                    if (isWeb){
+                    if (enableNoStoreMode || isWeb){
                         initAppProductsForStore().then(function(appProductsArr){
                             iapSrv.appProductsArr = appProductsArr;
                             console.log('app products loaded');
@@ -518,18 +523,6 @@
                         console.error('failed to init store products, err=' + err);
                     });
 
-                };
-
-                // $rootScope.$on(LOGIN_EVENT, function(event) {
-                //  console.log('calling to initStore');
-                //     iapSrv.initStore();
-                // });
-
-                //todo - delete 
-                iapSrv.noStore = function (err) {
-                    if (!err) {
-                        err = 'No store available';
-                    }
                 };
 
                 function offlineHandler() {
