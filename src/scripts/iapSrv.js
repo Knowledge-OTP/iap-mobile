@@ -52,7 +52,9 @@
                     purchaseInProgressProm: undefined,
                     IapErrorCodeEnum: {
                           CANCELLED: 0,
-                          FAILED: 1
+                          FAILED: 1,
+                          VALIDATOR_FALSE: 2,
+                          VALIDATOR_ERROR: 3
                     }
                 };
 
@@ -285,14 +287,14 @@
                                             // }
                                         }
                                         else{
-                                            console.error('error in store validator');
+                                            console.error('store validator returned false');
                                             iapSrv.purchaseInProgressProm.reject(false);
-                                            callback(false, "Impossible to proceed with validation");
+                                            callback(false, {error: { code: iapSrv.IapErrorCodeEnum.VALIDATOR_FALSE , message: 'store validator returned false' }});
                                         }
                                     }).catch(function(err){
                                         console.error('error in store validator: ' + err);
                                         iapSrv.purchaseInProgressProm.reject(err);
-                                        callback(false, "Impossible to proceed with validation");
+                                        callback(false, {error: { code: iapSrv.IapErrorCodeEnum.VALIDATOR_ERROR , message: err }});
                                     });
 
 
@@ -399,13 +401,13 @@
                                 $ionicLoading.hide();
                                 console.log('purchase cancelled');
                                 if (iapSrv.purchaseInProgressProm){
-                                    iapSrv.purchaseInProgressProm.reject(new Error([iapSrv.IapErrorCodeEnum.CANCELLED]));
+                                    iapSrv.purchaseInProgressProm.reject({code:iapSrv.IapErrorCodeEnum.CANCELLED,  message: 'purchase cancelled'});
                                 }
                             };
                             
                             /////////////////////////////
                             /////////////////////////////
-                            // Cancelled App products Handler
+                            // Cancelled and Refunded App products Handler
                             /////////////////////////////
                             /////////////////////////////
 
@@ -413,11 +415,14 @@
                                 $window.store.when(appProduct.id).cancelled(function(product){
                                     purchaseCancelled(product);                               
                                 });
+                                $window.store.when(appProduct.id).refunded(function(product){
+                                    console.log('purchase refunded, product:' + product.id);                               
+                                });
                             });
 
                             /////////////////////////////
                             /////////////////////////////
-                            // Updated App products Handler
+                            // Updated and Finished App products Handler
                             /////////////////////////////
                             /////////////////////////////
 
@@ -425,6 +430,9 @@
                                 $window.store.when(appProduct.id).updated(function(product){
                                     console.log('product updated: ' + product.id);
                                     iapSrv.products[product.id] = product;
+                                });
+                                $window.store.when(appProduct.id).finished(function(product){
+                                    console.log('product finished: ' + product.id);
                                 });
                             });
 
