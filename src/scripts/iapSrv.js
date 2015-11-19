@@ -27,16 +27,17 @@
         this.$get = [
             '$window', '$q', '$injector', '$filter', 'InAppPurchaseHelperSrv', 'ENV', '$analytics','$ionicLoading','$ionicPopup','$document','$timeout',
             function ($window, $q, $injector, $filter, InAppPurchaseHelperSrv, ENV, $analytics, $ionicLoading, $ionicPopup, $document, $timeout) {
-
+                
+                var isWeb = !$window.cordova;
                 var iapStoreReadyDfd = $q.defer();
                 var iapStoreReadyProm = iapStoreReadyDfd.promise;
-                if (enableNoStoreMode === true){
+                if (enableNoStoreMode || isWeb){
                     iapStoreReadyDfd.resolve();
                 }
                 var registerdProductsPromArr = [];
                 var isOnline = !!($window.navigator && $window.navigator.onLine);
                 var validatorFunc;
-                var isWeb = !$window.cordova;
+                
                 var appProductsCount = 0;
                 var extendedProductMock = {
                     transaction: {
