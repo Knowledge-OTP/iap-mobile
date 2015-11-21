@@ -34,7 +34,6 @@
                 if (enableNoStoreMode || isWeb){
                     iapStoreReadyDfd.resolve();
                 }
-                var registerdProductsPromArr = [];
                 var isOnline = !!($window.navigator && $window.navigator.onLine);
                 var validatorFunc;
                 

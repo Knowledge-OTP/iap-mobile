@@ -154,7 +154,6 @@
                 if (enableNoStoreMode || isWeb){
                     iapStoreReadyDfd.resolve();
                 }
-                var registerdProductsPromArr = [];
                 var isOnline = !!($window.navigator && $window.navigator.onLine);
                 var validatorFunc;
                 
@@ -561,6 +560,11 @@
                             /////////////////////////////
                             /////////////////////////////
 
+                            $window.store.ready(function(){
+                                console.log('-----store is ready-----');
+                                iapStoreReadyDfd.resolve();
+                            }); 
+
                             iapSrv.appProductsArr.forEach(function (appProduct){
                                 $window.store.when(appProduct.id).updated(function(product){
                                     console.log('product updated: ' + product.id);
@@ -568,13 +572,6 @@
                                 });
                                 $window.store.when(appProduct.id).finished(function(product){
                                     console.log('product finished: ' + product.id);
-                                });
-                                $window.store.when(appProduct.id).registered(function(product){
-                                    console.log('product registered: ' + product.id);
-                                    registerdProductsPromArr.push($q.when(product.id));
-                                    if (registerdProductsPromArr.length === appProductsCount){
-                                        iapStoreReadyDfd.resolve();
-                                    }
                                 });
                             });
 
