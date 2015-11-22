@@ -31,16 +31,16 @@
                 var isWeb = !$window.cordova;
                 var iapStoreReadyDfd = $q.defer();
                 var iapStoreReadyProm = iapStoreReadyDfd.promise;
-                var iapStoreTimeoutPending = true;
+                var iapStoreTimedOut = false;
                 var iapStoreReadyTimeout = $timeout(function(){
-                    if (iapStoreTimeoutPending){
-                        iapStoreReadyDfd.reject('store timeout');
-                    }                    
+                    iapStoreTimedOut = true;
+                    iapStoreReadyDfd.reject('store timeout');
                 },10000);
                 if (enableNoStoreMode || isWeb){
-                    iapStoreTimeoutPending = false;
-                    $timeout.cancel(iapStoreReadyTimeout);
-                    iapStoreReadyDfd.resolve();
+                    if(!iapStoreTimedOut){
+                        $timeout.cancel(iapStoreReadyTimeout);
+                        iapStoreReadyDfd.resolve();
+                    }
                 }
                 var isOnline = !!($window.navigator && $window.navigator.onLine);
                 var validatorFunc;
@@ -242,7 +242,9 @@
                     if (!$window.store){
                         console.log('store is not available');
                         if (iapStoreReadyDfd){
-                            iapStoreReadyDfd.reject();
+                            if (!iapStoreTimedOut){
+                               iapStoreReadyDfd.reject(); 
+                            }
                         }
                         iapSrv.loadingError = true;
                         return;
@@ -255,7 +257,9 @@
                     initAppProductsForStoreProm.catch(function (err) {
                         console.error('failed to load app products, err:' + err);
                         if (iapStoreReadyDfd){
-                            iapStoreReadyDfd.reject(err);
+                            if (!iapStoreTimedOut){
+                                iapStoreReadyDfd.reject(err);
+                            }
                         }
                         iapSrv.loadingError = true;
                         return;
@@ -269,7 +273,9 @@
                         else{
                             console.error('failed to load app products');
                             if (iapStoreReadyDfd){
-                                iapStoreReadyDfd.reject();
+                                if (!iapStoreTimedOut){
+                                    iapStoreReadyDfd.reject();
+                                }
                             }
                             return;
                         }
@@ -298,7 +304,7 @@
 
                                 console.log('validator');
 
-                                if (InAppPurchaseHelperSrv.canUpgrade() && product.transaction){
+                                if (product.transaction){
                                     console.log('validator and transaction:' + JSON.stringify(product.transaction));
 
                                     var validator = _getValidatorFunc();
@@ -460,9 +466,10 @@
 
                             $window.store.ready(function(){
                                 console.log('-----store is ready-----');
-                                iapStoreTimeoutPending = false;
-                                $timeout.cancel(iapStoreReadyTimeout);
-                                iapStoreReadyDfd.resolve();
+                                if(!iapStoreTimedOut){
+                                    $timeout.cancel(iapStoreReadyTimeout);
+                                    iapStoreReadyDfd.resolve();
+                                }
                             }); 
 
                             iapSrv.appProductsArr.forEach(function (appProduct){
@@ -488,7 +495,9 @@
                                 }
 
                                 if (iapStoreReadyDfd){
-                                    iapStoreReadyDfd.reject(err);
+                                    if (!iapStoreTimedOut){
+                                        iapStoreReadyDfd.reject(err);
+                                    }
                                 }
                                 console.log('store error ' + err.code + ': ' + err.message);
                                 console.log('isShowingModal: ' + iapSrv.isShowingModal);
@@ -525,15 +534,14 @@
                                     }
                                 }
                             });
-
-                            if (InAppPurchaseHelperSrv.canUpgrade()){
-                                $window.store.refresh();
-                            }
+                           $window.store.refresh();
                         }
                     })
                     .catch(function(err){
                         if (iapStoreReadyDfd){
-                            iapStoreReadyDfd.reject(err);
+                            if (!iapStoreTimedOut){
+                                iapStoreReadyDfd.reject(err);
+                            }
                         }
                         console.error('failed to init store products, err=' + err);
                     });

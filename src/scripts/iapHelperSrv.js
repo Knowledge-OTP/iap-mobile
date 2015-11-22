@@ -20,10 +20,6 @@
                 });
             };
 
-            InAppPurchaseHelperSrv.canUpgrade = function(){
-                return true;
-            };
-
             InAppPurchaseHelperSrv.getUserSubscription = function(){
                 //preventing dependency ins storageSrv
                 var StorageSrv = $injector.get('StorageSrv');
