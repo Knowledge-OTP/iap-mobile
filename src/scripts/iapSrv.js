@@ -31,7 +31,15 @@
                 var isWeb = !$window.cordova;
                 var iapStoreReadyDfd = $q.defer();
                 var iapStoreReadyProm = iapStoreReadyDfd.promise;
+                var iapStoreTimeoutPending = true;
+                var iapStoreReadyTimeout = $timeout(function(){
+                    if (iapStoreTimeoutPending){
+                        iapStoreReadyDfd.reject('store timeout');
+                    }                    
+                },10000);
                 if (enableNoStoreMode || isWeb){
+                    iapStoreTimeoutPending = false;
+                    $timeout.cancel(iapStoreReadyTimeout);
                     iapStoreReadyDfd.resolve();
                 }
                 var isOnline = !!($window.navigator && $window.navigator.onLine);
@@ -233,6 +241,9 @@
                     
                     if (!$window.store){
                         console.log('store is not available');
+                        if (iapStoreReadyDfd){
+                            iapStoreReadyDfd.reject();
+                        }
                         iapSrv.loadingError = true;
                         return;
                     }
@@ -243,6 +254,9 @@
                     var initAppProductsForStoreProm = initAppProductsForStore();
                     initAppProductsForStoreProm.catch(function (err) {
                         console.error('failed to load app products, err:' + err);
+                        if (iapStoreReadyDfd){
+                            iapStoreReadyDfd.reject(err);
+                        }
                         iapSrv.loadingError = true;
                         return;
                     });
@@ -254,6 +268,9 @@
                         }
                         else{
                             console.error('failed to load app products');
+                            if (iapStoreReadyDfd){
+                                iapStoreReadyDfd.reject();
+                            }
                             return;
                         }
 
@@ -414,6 +431,7 @@
                             var purchaseCancelled = function purchaseCancelled(){
                                 $ionicLoading.hide();
                                 console.log('purchase cancelled');
+
                                 if (iapSrv.purchaseInProgressProm){
                                     iapSrv.purchaseInProgressProm.reject({code:iapSrv.IapErrorCodeEnum.CANCELLED,  message: 'purchase cancelled'});
                                 }
@@ -442,6 +460,8 @@
 
                             $window.store.ready(function(){
                                 console.log('-----store is ready-----');
+                                iapStoreTimeoutPending = false;
+                                $timeout.cancel(iapStoreReadyTimeout);
                                 iapStoreReadyDfd.resolve();
                             }); 
 
@@ -465,6 +485,10 @@
                                 $ionicLoading.hide();
                                 if (iapSrv.purchaseInProgressProm){
                                     iapSrv.purchaseInProgressProm.reject(err);
+                                }
+
+                                if (iapStoreReadyDfd){
+                                    iapStoreReadyDfd.reject(err);
                                 }
                                 console.log('store error ' + err.code + ': ' + err.message);
                                 console.log('isShowingModal: ' + iapSrv.isShowingModal);
@@ -508,6 +532,9 @@
                         }
                     })
                     .catch(function(err){
+                        if (iapStoreReadyDfd){
+                            iapStoreReadyDfd.reject(err);
+                        }
                         console.error('failed to init store products, err=' + err);
                     });
 
