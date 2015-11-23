@@ -120,8 +120,8 @@ describe('testing service "IapSrv":', function () {
         expect(products).toEqual(expectedProducts);
     });
 
-    it('given IapSrv not initialized, then initializedStore should be false', function () {
+    it('given IapSrv is initialized, then isPurchaseInProgress should be false', function () {
         window.store._init();
-        expect(IapSrv.initializedStore).toEqual(false);
+        expect(IapSrv.isPurchaseInProgress).toEqual(false);
     });
 });

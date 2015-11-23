@@ -121,11 +121,11 @@
         
         var productsGetter;
         var validatorFuncRef;
-        var _availProductsFallback;
+        // var _availProductsFallback;
         var enableNoStoreMode;
-        this.setProductsFallback = function(availProductsFallback){
-            _availProductsFallback = availProductsFallback;
-        };
+        // this.setProductsFallback = function(availProductsFallback){
+        //     _availProductsFallback = availProductsFallback;
+        // };
 
         this.registerProducts = function(fnOrArr){
             productsGetter = fnOrArr;
@@ -161,7 +161,6 @@
                 var isOnline = !!($window.navigator && $window.navigator.onLine);
                 var validatorFunc;
                 
-                var appProductsCount = 0;
                 var extendedProductMock = {
                     transaction: {
                         id:'demo'
@@ -176,16 +175,17 @@
                     products: {},
                     //application products (not store products)
                     appProductsArr: [],
-                    loadingError: false,
-                    isShowingModal: false,
-                    currentErrorPopup: undefined,
-                    isPurchasing: false,
-                    purchaseInProgressProm: undefined,
+                    //loadingError: false,
+                    // isShowingModal: false,
+                    // currentErrorPopup: undefined,
+                    isPurchaseInProgress: false,
+                    purchaseInProgressDfd: undefined,
                     IapErrorCodeEnum: {
                           CANCELLED: 0,
                           FAILED: 1,
                           VALIDATOR_FALSE: 2,
-                          VALIDATOR_ERROR: 3
+                          VALIDATOR_ERROR: 3,
+                          VALIDATOR_NO_TRANSACTION: 4
                     }
                 };
 
@@ -246,7 +246,12 @@
                 iapSrv.purchase = function(productId){
 
                     return iapStoreReadyProm.then(function(){
-                         iapSrv.purchaseInProgressProm = $q.defer();
+                        console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                        iapSrv.isPurchaseInProgress = true;
+                        iapSrv.purchaseInProgressDfd = $q.defer();
+                        $ionicLoading.show({
+                            template: 'Purchase is in progress...'
+                        });
 
                         if (enableNoStoreMode || isWeb){
                             var validator = _getValidatorFunc();
@@ -258,55 +263,64 @@
                             validator(mockProductForWeb).then(function(res){
                                 if (res){
                                     console.log('mock purchase completed');
-                                    iapSrv.purchaseInProgressProm.resolve(appProduct);
+                                    iapSrv.purchaseInProgressDfd.resolve(appProduct);
+                                    iapSrv.isPurchaseInProgress = false;
+                                    $ionicLoading.hide();
+                                    console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                                 }
                                 else{
-                                    console.log('error in validating purchase');
-                                    iapSrv.purchaseInProgressProm.reject();
+                                    console.log('error in validating mock purchase');
+                                    iapSrv.purchaseInProgressDfd.reject();
+                                    iapSrv.isPurchaseInProgress = false;
+                                    $ionicLoading.hide();
+                                    console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                                 }
                             })
                             .catch(function(err){
-                                console.log('error in purchase, err: ' + err);
-                                iapSrv.purchaseInProgressProm.reject(err);
+                                console.log('error in mock purchase, err: ' + err);
+                                iapSrv.purchaseInProgressDfd.reject(err);
+                                iapSrv.isPurchaseInProgress = false;
+                                $ionicLoading.hide();
+                                console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                             });
-                            return iapSrv.purchaseInProgressProm.promise;
+                            return iapSrv.purchaseInProgressDfd.promise;
                         }
                         
-                        iapSrv.isShowingModal=true;
+                        // iapSrv.isShowingModal=true;
                         var product = iapSrv.products[productId];
 
                         if (product){
-                            iapSrv.isPurchasing = true;
-
                             $window.store.order(product.id).error(function(err){
-                                console.log('error in purchase');
-                                if (iapSrv.purchaseInProgressProm){
-                                    iapSrv.purchaseInProgressProm.reject(err);
-                                }
-
+                                console.log('error in purchase, store.order, err:' + err);
+                                iapSrv.purchaseInProgressDfd.reject(err);
+                                iapSrv.isPurchaseInProgress = false;
                                 $ionicLoading.hide();
+                                console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                                
+                                // if (iapSrv.currentErrorPopup){
+                                //     iapSrv.currentErrorPopup.close();
+                                // }
 
-                                if (iapSrv.currentErrorPopup){
-                                    iapSrv.currentErrorPopup.close();
-                                }
-
-                                iapSrv.currentErrorPopup.then(function(){
-                                    iapSrv.currentErrorPopup = undefined;
-                                });
+                                // iapSrv.currentErrorPopup.then(function(){
+                                //     iapSrv.currentErrorPopup = undefined;
+                                // });
                             });
                         }
                         else{
+                            // if (iapSrv.currentErrorPopup){
+                            //     iapSrv.currentErrorPopup.close();
+                            // }
 
-                            if (iapSrv.currentErrorPopup){
-                                iapSrv.currentErrorPopup.close();
-                            }
-
-                            iapSrv.currentErrorPopup.then(function(){
-                                iapSrv.currentErrorPopup = undefined;
-                                iapSrv.purchaseInProgressProm.reject();
-                            }); 
+                            // iapSrv.currentErrorPopup.then(function(){
+                            //     iapSrv.currentErrorPopup = undefined;
+                            // }); 
+                            console.log('error in purchase, no product');
+                            iapSrv.purchaseInProgressDfd.reject();
+                            iapSrv.isPurchaseInProgress = false;
+                            $ionicLoading.hide();
+                            console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                         }
-                        return iapSrv.purchaseInProgressProm.promise;
+                        return iapSrv.purchaseInProgressDfd.promise;
                     });
                 };
 
@@ -362,7 +376,7 @@
                                iapStoreReadyDfd.reject(); 
                             }
                         }
-                        iapSrv.loadingError = true;
+                        // iapSrv.loadingError = true;
                         return;
                     }
                     else{
@@ -370,17 +384,17 @@
                     }
 
                     var initAppProductsForStoreProm = initAppProductsForStore();
-                    initAppProductsForStoreProm.catch(function (err) {
+                    initAppProductsForStoreProm.catch(function(err) {
                         console.error('failed to load app products, err:' + err);
                         if (iapStoreReadyDfd){
                             if (!iapStoreTimedOut){
                                 iapStoreReadyDfd.reject(err);
                             }
                         }
-                        iapSrv.loadingError = true;
+                        // iapSrv.loadingError = true;
                         return;
                     });
-                    initAppProductsForStoreProm.then(function (appProductsArr) {
+                    initAppProductsForStoreProm.then(function(appProductsArr){
 
                         if (angular.isArray(appProductsArr) && appProductsArr.length>0){
                             iapSrv.appProductsArr = appProductsArr;
@@ -396,17 +410,9 @@
                             return;
                         }
 
-                        appProductsCount = appProductsArr.length;
-                        
                         if (!iapSrv.initializedStore){
                             //TODO
                             iapSrv.initializedStore = true;
-
-
-
-                            // iapSrv.appProductsArr.forEach(function (appProduct){
-
-                            // });
 
                             $window.store.verbosity = false ? $window.store.DEBUG : $window.store.QUIET;
 
@@ -418,39 +424,45 @@
                             
                             $window.store.validator = function(product, callback){
 
-                                console.log('validator');
+                                console.log('performing validator');
 
                                 if (product.transaction){
-                                    console.log('validator and transaction:' + JSON.stringify(product.transaction));
+                                    console.log('new transaction');
 
                                     var validator = _getValidatorFunc();
-
                                     validator(product).then(function(res){
                                         $ionicLoading.hide();
                                         if (res){
-                                            iapSrv.purchaseInProgressProm.resolve(product);
+                                            iapSrv.purchaseInProgressDfd.resolve(product);
+                                            iapSrv.isPurchaseInProgress = false;
+                                            $ionicLoading.hide();
+                                            console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                                             callback(true, product);
-                                            // if (iapSrv.isShowingModal){
-                                            //     $ionicLoading.show({
-                                            //         template: 'purchase verified'
-                                            //     });
-                                            //     $timeout(function(){
-                                            //         $ionicLoading.hide();
-                                            //     }, 2000);
-                                            // }
                                         }
                                         else{
                                             console.error('store validator returned false');
-                                            iapSrv.purchaseInProgressProm.reject(false);
+                                            iapSrv.purchaseInProgressDfd.reject(false);
+                                            iapSrv.isPurchaseInProgress = false;
+                                            $ionicLoading.hide();
+                                            console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                                             callback(false, {error: { code: iapSrv.IapErrorCodeEnum.VALIDATOR_FALSE , message: 'store validator returned false' }});
                                         }
                                     }).catch(function(err){
                                         console.error('error in store validator: ' + err);
-                                        iapSrv.purchaseInProgressProm.reject(err);
+                                        iapSrv.purchaseInProgressDfd.reject(err);
+                                        iapSrv.isPurchaseInProgress = false;
+                                        $ionicLoading.hide();
+                                        console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                                         callback(false, {error: { code: iapSrv.IapErrorCodeEnum.VALIDATOR_ERROR , message: err }});
                                     });
-
-
+                                }
+                                else{
+                                    console.log('no transaction');
+                                    iapSrv.purchaseInProgressDfd.reject();
+                                    iapSrv.isPurchaseInProgress = false;
+                                    $ionicLoading.hide();
+                                    console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                                    callback(false, {error: { code: iapSrv.IapErrorCodeEnum.VALIDATOR_NO_TRANSACTION , message: 'no transaction' }});
                                 }
                             };
 
@@ -521,26 +533,13 @@
 
                             /////////////////////////////
                             /////////////////////////////
-                            // purchaseInitiated
-                            /////////////////////////////
-                            /////////////////////////////
-
-                            var purchaseInitiated = function purchaseInitiated(){
-                                $ionicLoading.show({
-                                    template: 'Purchase is in progress...'
-                                });
-                                console.log('Purchase is in progress...');
-                            };
-                            
-                            /////////////////////////////
-                            /////////////////////////////
                             // Initiated App products Handler
                             /////////////////////////////
                             /////////////////////////////
 
                             iapSrv.appProductsArr.forEach(function (appProduct) {
                                 $window.store.when(appProduct.id).initiated(function(){
-                                    purchaseInitiated();                               
+                                    console.log('purchase initiated...');                              
                                 });
                             });
 
@@ -551,12 +550,11 @@
                             /////////////////////////////
 
                             var purchaseCancelled = function purchaseCancelled(){
-                                $ionicLoading.hide();
                                 console.log('purchase cancelled');
-
-                                if (iapSrv.purchaseInProgressProm){
-                                    iapSrv.purchaseInProgressProm.reject({code:iapSrv.IapErrorCodeEnum.CANCELLED,  message: 'purchase cancelled'});
-                                }
+                                iapSrv.purchaseInProgressDfd.reject({code:iapSrv.IapErrorCodeEnum.CANCELLED,  message: 'purchase cancelled'});
+                                iapSrv.isPurchaseInProgress = false;
+                                $ionicLoading.hide();
+                                console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                             };
                             
                             /////////////////////////////
@@ -605,50 +603,52 @@
                             /////////////////////////////
 
                             $window.store.error(function(err){
-                                $ionicLoading.hide();
-                                if (iapSrv.purchaseInProgressProm){
-                                    iapSrv.purchaseInProgressProm.reject(err);
+                                if (angular.isDefined(iapSrv.purchaseInProgressDfd)){
+                                    iapSrv.purchaseInProgressDfd.reject(err);
                                 }
-
+                                iapSrv.isPurchaseInProgress = false;
+                                $ionicLoading.hide();
+                                console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                            
                                 if (iapStoreReadyDfd){
                                     if (!iapStoreTimedOut){
                                         iapStoreReadyDfd.reject(err);
                                     }
                                 }
                                 console.log('store error ' + err.code + ': ' + err.message);
-                                console.log('isShowingModal: ' + iapSrv.isShowingModal);
+                                // console.log('isShowingModal: ' + iapSrv.isShowingModal);
 
-                                if (err.code !== $window.store.ERR_PURCHASE && iapSrv.isShowingModal){
-                                    iapSrv.loadingError = true;
+                                // if (err.code !== $window.store.ERR_PURCHASE && iapSrv.isShowingModal){
+                                //     iapSrv.loadingError = true;
 
-                                    if (!iapSrv.currentErrorPopup){
-                                        iapSrv.currentErrorPopup = $ionicPopup.alert({
-                                            title: 'Error',
-                                            template: 'There was an error with the store. Please try again later.',
-                                            okText: 'OK',
-                                            okType: 'button-default'
-                                        });
-                                        iapSrv.currentErrorPopup.then(function(){
-                                            iapSrv.currentErrorPopup = undefined;
-                                        });
-                                    }
-                                }
+                                //     // if (!iapSrv.currentErrorPopup){
+                                //     //     iapSrv.currentErrorPopup = $ionicPopup.alert({
+                                //     //         title: 'Error',
+                                //     //         template: 'There was an error with the store. Please try again later.',
+                                //     //         okText: 'OK',
+                                //     //         okType: 'button-default'
+                                //     //     });
+                                //     //     iapSrv.currentErrorPopup.then(function(){
+                                //     //         iapSrv.currentErrorPopup = undefined;
+                                //     //     });
+                                //     // }
+                                // }
 
-                                if (err.code && iapSrv.isShowingModal){
-                                    iapSrv.loadingError = true;
+                                // if (err.code && iapSrv.isShowingModal){
+                                //     iapSrv.loadingError = true;
 
-                                    if (!iapSrv.currentErrorPopup){
-                                        iapSrv.currentErrorPopup = $ionicPopup.alert({
-                                            title: 'Error',
-                                            template: 'There was an error with the store. Please try again later.',
-                                            okText: 'OK',
-                                            okType: 'button-default'
-                                        });
-                                        iapSrv.currentErrorPopup.then(function(){
-                                            iapSrv.currentErrorPopup = undefined;
-                                        });
-                                    }
-                                }
+                                //     if (!iapSrv.currentErrorPopup){
+                                //         iapSrv.currentErrorPopup = $ionicPopup.alert({
+                                //             title: 'Error',
+                                //             template: 'There was an error with the store. Please try again later.',
+                                //             okText: 'OK',
+                                //             okType: 'button-default'
+                                //         });
+                                //         iapSrv.currentErrorPopup.then(function(){
+                                //             iapSrv.currentErrorPopup = undefined;
+                                //         });
+                                //     }
+                                // }
                             });
                            $window.store.refresh();
                         }
