@@ -28,10 +28,6 @@
                 });
             };
 
-            InAppPurchaseHelperSrv.canUpgrade = function(){
-                return true;
-            };
-
             InAppPurchaseHelperSrv.getUserSubscription = function(){
                 //preventing dependency ins storageSrv
                 var StorageSrv = $injector.get('StorageSrv');
@@ -147,10 +143,25 @@
         this.$get = [
             '$window', '$q', '$injector', '$filter', 'InAppPurchaseHelperSrv', 'ENV', '$analytics','$ionicLoading','$ionicPopup','$document','$timeout',
             function ($window, $q, $injector, $filter, InAppPurchaseHelperSrv, ENV, $analytics, $ionicLoading, $ionicPopup, $document, $timeout) {
-
+                
+                var isWeb = !$window.cordova;
+                var iapStoreReadyDfd = $q.defer();
+                var iapStoreReadyProm = iapStoreReadyDfd.promise;
+                var iapStoreTimedOut = false;
+                var iapStoreReadyTimeout = $timeout(function(){
+                    iapStoreTimedOut = true;
+                    iapStoreReadyDfd.reject('store timeout');
+                },10000);
+                if (enableNoStoreMode || isWeb){
+                    if(!iapStoreTimedOut){
+                        $timeout.cancel(iapStoreReadyTimeout);
+                        iapStoreReadyDfd.resolve();
+                    }
+                }
                 var isOnline = !!($window.navigator && $window.navigator.onLine);
                 var validatorFunc;
-                var isWeb = !$window.cordova;
+                
+                var appProductsCount = 0;
                 var extendedProductMock = {
                     transaction: {
                         id:'demo'
@@ -190,14 +201,6 @@
                     return $injector.invoke(productsGetter);
                 }
 
-                iapSrv.isStoreLoaded = function isStoreLoaded(){
-                    return iapSrv.products[iapSrv.appProductsArr[0].id] || iapSrv.isLoadingError();
-                };
-
-                iapSrv.isLoadingError = function isLoadingError(){
-                    return iapSrv.loadingError;
-                };
-
                 iapSrv.getAppProduct = function(productId){
                     for (var i = 0; i < iapSrv.appProductsArr.length; i++) { 
                         if (iapSrv.appProductsArr[i].id === productId){
@@ -207,76 +210,92 @@
                 };
 
                 iapSrv.getStoreProduct = function(productId){
-                    return iapSrv.products[productId];
+                    return iapStoreReadyProm.then(function(){
+                        return iapSrv.products[productId];    
+                    });
                 };
 
                 iapSrv.getStoreProducts = function(){
+                    return iapStoreReadyProm.then(function(){
+                        var storeProductsArr = [];
+                        // if (!isOnline) {
+                        //     return $q.reject('No Internet connection');                        
+                        // }
 
-                    var storeProductsArr = [];
-
-                    // if (!isOnline) {
-                    //     return $q.reject('No Internet connection');                        
-                    // }
-
-                    if (enableNoStoreMode || isWeb){
-                        iapSrv.appProductsArr.forEach(function (appProduct){
-                            var mockProductForWeb = {};
-                            extendedProductMock.title = appProduct.id.replace('com.zinkerz.zinkerztoefl.','');
-                            angular.extend(mockProductForWeb, appProduct, extendedProductMock);
-                            storeProductsArr.push(angular.copy(mockProductForWeb));
-                        });
-                    }
-                    else{
-                        for(var propertyName in iapSrv.products) {
-                            storeProductsArr.push(angular.copy(iapSrv.products[propertyName]));
+                        if (enableNoStoreMode || isWeb){
+                            iapSrv.appProductsArr.forEach(function (appProduct){
+                                var mockProductForWeb = {};
+                                extendedProductMock.title = appProduct.id.replace('com.zinkerz.zinkerztoefl.','');
+                                angular.extend(mockProductForWeb, appProduct, extendedProductMock);
+                                storeProductsArr.push(angular.copy(mockProductForWeb));
+                            });
                         }
-                    }
-                    return storeProductsArr;
+                        else{
+                            for(var propertyName in iapSrv.products) {
+                                storeProductsArr.push(angular.copy(iapSrv.products[propertyName]));
+                            }
+                        }
+                        return storeProductsArr;
+                    });
+                };
+
+                iapSrv.getIapStoreReadyPromise = function(){
+                    return iapStoreReadyProm;
                 };
                 
                 iapSrv.purchase = function(productId){
 
-                    iapSrv.purchaseInProgressProm = $q.defer();
+                    return iapStoreReadyProm.then(function(){
+                         iapSrv.purchaseInProgressProm = $q.defer();
 
-                    if (enableNoStoreMode || isWeb){
-                        var validator = _getValidatorFunc();
-                        var mockProductForWeb = {};
-                        var appProduct = iapSrv.getAppProduct(productId);
+                        if (enableNoStoreMode || isWeb){
+                            var validator = _getValidatorFunc();
+                            var mockProductForWeb = {};
+                            var appProduct = iapSrv.getAppProduct(productId);
 
-                        angular.extend(mockProductForWeb, appProduct, extendedProductMock);
+                            angular.extend(mockProductForWeb, appProduct, extendedProductMock);
 
-                        validator(mockProductForWeb).then(function(res){
-                            if (res){
-                                console.log('mock purchase completed');
-                                iapSrv.purchaseInProgressProm.resolve(appProduct);
-                            }
-                            else{
-                                console.log('error in validating purchase');
-                                iapSrv.purchaseInProgressProm.reject();
-                            }
-                        })
-                        .catch(function(err){
-                            console.log('error in purchase, err: ' + err);
-                            iapSrv.purchaseInProgressProm.reject(err);
-                        });
-                        return iapSrv.purchaseInProgressProm.promise;
-                    }
-
-
-                    
-                    iapSrv.isShowingModal=true;
-                    var product = iapSrv.products[productId];
-
-                    if (product){
-                        iapSrv.isPurchasing = true;
-
-                        $window.store.order(product.id).error(function(err){
-                            console.log('error in purchase');
-                            if (iapSrv.purchaseInProgressProm){
+                            validator(mockProductForWeb).then(function(res){
+                                if (res){
+                                    console.log('mock purchase completed');
+                                    iapSrv.purchaseInProgressProm.resolve(appProduct);
+                                }
+                                else{
+                                    console.log('error in validating purchase');
+                                    iapSrv.purchaseInProgressProm.reject();
+                                }
+                            })
+                            .catch(function(err){
+                                console.log('error in purchase, err: ' + err);
                                 iapSrv.purchaseInProgressProm.reject(err);
-                            }
+                            });
+                            return iapSrv.purchaseInProgressProm.promise;
+                        }
+                        
+                        iapSrv.isShowingModal=true;
+                        var product = iapSrv.products[productId];
 
-                            $ionicLoading.hide();
+                        if (product){
+                            iapSrv.isPurchasing = true;
+
+                            $window.store.order(product.id).error(function(err){
+                                console.log('error in purchase');
+                                if (iapSrv.purchaseInProgressProm){
+                                    iapSrv.purchaseInProgressProm.reject(err);
+                                }
+
+                                $ionicLoading.hide();
+
+                                if (iapSrv.currentErrorPopup){
+                                    iapSrv.currentErrorPopup.close();
+                                }
+
+                                iapSrv.currentErrorPopup.then(function(){
+                                    iapSrv.currentErrorPopup = undefined;
+                                });
+                            });
+                        }
+                        else{
 
                             if (iapSrv.currentErrorPopup){
                                 iapSrv.currentErrorPopup.close();
@@ -284,21 +303,11 @@
 
                             iapSrv.currentErrorPopup.then(function(){
                                 iapSrv.currentErrorPopup = undefined;
-                            });
-                        });
-                    }
-                    else{
-
-                        if (iapSrv.currentErrorPopup){
-                            iapSrv.currentErrorPopup.close();
+                                iapSrv.purchaseInProgressProm.reject();
+                            }); 
                         }
-
-                        iapSrv.currentErrorPopup.then(function(){
-                            iapSrv.currentErrorPopup = undefined;
-                            iapSrv.purchaseInProgressProm.reject();
-                        }); 
-                    }
-                    return iapSrv.purchaseInProgressProm.promise;
+                        return iapSrv.purchaseInProgressProm.promise;
+                    });
                 };
 
                 //TODO - protect by promise, two simaltonasily will crash the app
@@ -328,7 +337,7 @@
                 // initStore
                 /////////////////////////////
                 /////////////////////////////
-                iapSrv.initStore = function initStore(){
+                iapSrv.initStore = function(){
 
                     if (enableNoStoreMode || isWeb){
                         initAppProductsForStore().then(function(appProductsArr){
@@ -348,6 +357,11 @@
                     
                     if (!$window.store){
                         console.log('store is not available');
+                        if (iapStoreReadyDfd){
+                            if (!iapStoreTimedOut){
+                               iapStoreReadyDfd.reject(); 
+                            }
+                        }
                         iapSrv.loadingError = true;
                         return;
                     }
@@ -358,6 +372,11 @@
                     var initAppProductsForStoreProm = initAppProductsForStore();
                     initAppProductsForStoreProm.catch(function (err) {
                         console.error('failed to load app products, err:' + err);
+                        if (iapStoreReadyDfd){
+                            if (!iapStoreTimedOut){
+                                iapStoreReadyDfd.reject(err);
+                            }
+                        }
                         iapSrv.loadingError = true;
                         return;
                     });
@@ -369,11 +388,25 @@
                         }
                         else{
                             console.error('failed to load app products');
+                            if (iapStoreReadyDfd){
+                                if (!iapStoreTimedOut){
+                                    iapStoreReadyDfd.reject();
+                                }
+                            }
                             return;
                         }
+
+                        appProductsCount = appProductsArr.length;
                         
                         if (!iapSrv.initializedStore){
+                            //TODO
                             iapSrv.initializedStore = true;
+
+
+
+                            // iapSrv.appProductsArr.forEach(function (appProduct){
+
+                            // });
 
                             $window.store.verbosity = false ? $window.store.DEBUG : $window.store.QUIET;
 
@@ -387,7 +420,7 @@
 
                                 console.log('validator');
 
-                                if (InAppPurchaseHelperSrv.canUpgrade() && product.transaction){
+                                if (product.transaction){
                                     console.log('validator and transaction:' + JSON.stringify(product.transaction));
 
                                     var validator = _getValidatorFunc();
@@ -520,6 +553,7 @@
                             var purchaseCancelled = function purchaseCancelled(){
                                 $ionicLoading.hide();
                                 console.log('purchase cancelled');
+
                                 if (iapSrv.purchaseInProgressProm){
                                     iapSrv.purchaseInProgressProm.reject({code:iapSrv.IapErrorCodeEnum.CANCELLED,  message: 'purchase cancelled'});
                                 }
@@ -546,6 +580,14 @@
                             /////////////////////////////
                             /////////////////////////////
 
+                            $window.store.ready(function(){
+                                console.log('-----store is ready-----');
+                                if(!iapStoreTimedOut){
+                                    $timeout.cancel(iapStoreReadyTimeout);
+                                    iapStoreReadyDfd.resolve();
+                                }
+                            }); 
+
                             iapSrv.appProductsArr.forEach(function (appProduct){
                                 $window.store.when(appProduct.id).updated(function(product){
                                     console.log('product updated: ' + product.id);
@@ -566,6 +608,12 @@
                                 $ionicLoading.hide();
                                 if (iapSrv.purchaseInProgressProm){
                                     iapSrv.purchaseInProgressProm.reject(err);
+                                }
+
+                                if (iapStoreReadyDfd){
+                                    if (!iapStoreTimedOut){
+                                        iapStoreReadyDfd.reject(err);
+                                    }
                                 }
                                 console.log('store error ' + err.code + ': ' + err.message);
                                 console.log('isShowingModal: ' + iapSrv.isShowingModal);
@@ -602,13 +650,15 @@
                                     }
                                 }
                             });
-
-                            if (InAppPurchaseHelperSrv.canUpgrade()){
-                                $window.store.refresh();
-                            }
+                           $window.store.refresh();
                         }
                     })
                     .catch(function(err){
+                        if (iapStoreReadyDfd){
+                            if (!iapStoreTimedOut){
+                                iapStoreReadyDfd.reject(err);
+                            }
+                        }
                         console.error('failed to init store products, err=' + err);
                     });
 
