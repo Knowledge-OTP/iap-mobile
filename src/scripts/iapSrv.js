@@ -152,7 +152,7 @@
                         console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                         if (iapSrv.isPurchaseInProgress){
                             console.log('purchase is already in progress');
-                            return $q.when(false);
+                            return $q.reject(false);
                         }
                         iapSrv.isPurchaseInProgress = true;
                         iapSrv.purchaseInProgressDfd = $q.defer();
