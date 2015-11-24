@@ -195,6 +195,8 @@
                 
                 iapSrv.purchase = function(productId){
 
+                    console.log('starting purchase');
+
                     return iapStoreReadyProm.then(function(){
                         console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                         if (iapSrv.isPurchaseInProgress){
@@ -405,6 +407,7 @@
                                     console.log('new transaction, transaction:' + JSON.stringify(product.transaction));
                                     
                                     if (enableRecipetValidation){
+                                        console.log('enableRecipetValidation is true');
                                         verifyRecieptProm = _verifyReciept(product.transaction);
                                     }
                                     else{
@@ -413,6 +416,7 @@
 
 
                                     verifyRecieptProm.then(function(res){
+                                        console.log('verifyRecieptProm returned ' + res);
                                         if (res){
                                             var validator = _getValidatorFunc();
                                             if (!angular.isFunction(validator)){
@@ -639,6 +643,9 @@
                             /////////////////////////////
 
                             $window.store.error(function(err){
+                                console.log('store error ' + err.code + ': ' + err.message);
+                                console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                                
                                 if (angular.isDefined(iapSrv.purchaseInProgressDfd)){
                                     iapSrv.purchaseInProgressDfd.reject(err);
                                 }
@@ -651,7 +658,6 @@
                                         iapStoreReadyDfd.reject(err);
                                     }
                                 }
-                                console.log('store error ' + err.code + ': ' + err.message);
                                 // console.log('isShowingModal: ' + iapSrv.isShowingModal);
 
                                 // if (err.code !== $window.store.ERR_PURCHASE && iapSrv.isShowingModal){
