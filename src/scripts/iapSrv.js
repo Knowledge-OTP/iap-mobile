@@ -118,12 +118,12 @@
                     else{
 
                         switch(platform){
-                            case PlatfromEnum.IOS:
+                            case 'apple':
                                 transactionData = {
                                     'appleReceipt' : transaction.appStoreReceipt
                                 };
                                 break;
-                            case PlatfromEnum.ANDROID:
+                            case 'google':
                                 transactionData = {
                                     'signature' : transaction.signature,
                                     'receiptData' : transaction.receipt
@@ -303,9 +303,9 @@
                 function _getPlatform(transactionType) {
                     switch (transactionType) {
                         case 'ios-appstore':
-                            return PlatfromEnum.IOS;
+                            return 'apple';
                         case 'android-playstore':
-                            return PlatfromEnum.ANDROID;
+                            return 'google';
                         default:
                             return PlatfromEnum.UNKNOWN;
                     }
@@ -403,7 +403,6 @@
                                 
                                 if (product.transaction){
                                     console.log('new transaction, transaction:' + JSON.stringify(product.transaction));
-
                                     
                                     if (enableRecipetValidation){
                                         verifyRecieptProm = _verifyReciept(product.transaction);
