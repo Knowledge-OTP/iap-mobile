@@ -126,6 +126,8 @@
         // this.setProductsFallback = function(availProductsFallback){
         //     _availProductsFallback = availProductsFallback;
         // };
+        var enableRecipetValidation=false;
+        var validationUrl;
 
         this.registerProducts = function(fnOrArr){
             productsGetter = fnOrArr;
@@ -140,9 +142,17 @@
             console.log('IAP EnableNoStoreMode: ' + enableNoStoreMode);
         };
 
+        this.setEnableRecipetValidation = function(shouldEnableRecipetValidation){
+            enableRecipetValidation = shouldEnableRecipetValidation;
+        };
+
+        this.setValidationUrl = function(url){
+            validationUrl = url;
+        };
+
         this.$get = [
-            '$window', '$q', '$injector', '$filter', 'InAppPurchaseHelperSrv', 'ENV', '$analytics','$ionicLoading','$ionicPopup','$document','$timeout',
-            function ($window, $q, $injector, $filter, InAppPurchaseHelperSrv, ENV, $analytics, $ionicLoading, $ionicPopup, $document, $timeout) {
+            '$window', '$q', '$injector', '$filter', 'InAppPurchaseHelperSrv', 'ENV', '$analytics','$ionicLoading','$ionicPopup','$document','$timeout', '$http',
+            function ($window, $q, $injector, $filter, InAppPurchaseHelperSrv, ENV, $analytics, $ionicLoading, $ionicPopup, $document, $timeout, $http) {
                 
                 var isWeb = !$window.cordova;
                 var iapStoreReadyDfd = $q.defer();
@@ -169,6 +179,11 @@
                     },
                     price: '$30.99',
                     title: 'buy'
+                };
+                var PlatfromEnum = {
+                    IOS: 0,
+                    ANDROID: 1,
+                    UNKNOWN: 2
                 };
                 
                 var iapSrv = {
@@ -206,6 +221,17 @@
                         }
                     }
                     return obj;
+                }
+
+                function _verifyReciept(provider, data) {
+                    if (provider === PlatfromEnum.UNKNOWN){
+                        return $q.reject();
+                    }
+                    return $http.post(validationUrl+'verify/'+ provider, data).then(function(success) {
+                           return success;
+                    }, function(error) {
+                           return $q.reject(error);
+                    });
                 }
 
                 function _getValidatorFunc(){
@@ -268,7 +294,7 @@
                         console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                         if (iapSrv.isPurchaseInProgress){
                             console.log('purchase is already in progress');
-                            return $q.when(false);
+                            return $q.reject(false);
                         }
                         iapSrv.isPurchaseInProgress = true;
                         iapSrv.purchaseInProgressDfd = $q.defer();
@@ -369,6 +395,17 @@
                     return _getAppProducts();
                 }
 
+                function _getPlatform(transactionType) {
+                    switch (transactionType) {
+                        case 'ios-appstore':
+                            return PlatfromEnum.IOS;
+                        case 'android-playstore':
+                            return PlatfromEnum.ANDROID;
+                        default:
+                            return PlatfromEnum.UNKNOWN;
+                    }
+                }
+
                 /////////////////////////////
                 /////////////////////////////
                 // initStore
@@ -404,6 +441,15 @@
                     }
                     else{
                         console.log('initializing store');
+                    }
+
+                    if (enableRecipetValidation){
+                        if (!angular.isString(validationUrl) ||  validationUrl.length===0){
+                            if (!iapStoreTimedOut){
+                               iapStoreReadyDfd.reject(); 
+                            }
+
+                        }
                     }
 
                     var initAppProductsForStoreProm = initAppProductsForStore();
@@ -448,11 +494,41 @@
                             $window.store.validator = function(product, callback){
 
                                 console.log('performing validator');
+                                var verifyRecieptProm;
+                                var platform;
 
                                 if (product.transaction){
                                     console.log('new transaction, transaction:' + JSON.stringify(product.transaction));
 
+                                    platform = _getPlatform(product.transaction.type);
+
+                                    if (enableRecipetValidation){
+                                        verifyRecieptProm = _verifyReciept(platform,product.transaction);
+                                    }
+                                    else{
+                                        verifyRecieptProm = $q.when(true);
+                                    }
+
+
+                                    verifyRecieptProm.then(function(){
+
+                                    })
+                                    .catch(function(){
+
+                                    });
+
                                     var validator = _getValidatorFunc();
+                                    if (!angular.isFunction(validator)){
+                                        console.error('_getValidatorFunc returned no function');
+                                        if (angular.isDefined(iapSrv.purchaseInProgressDfd)){
+                                            iapSrv.purchaseInProgressDfd.reject(false);
+                                        }
+                                        iapSrv.isPurchaseInProgress = false;
+                                        $ionicLoading.hide();
+                                        console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                                        callback(false, {error: { code: iapSrv.IapErrorCodeEnum.VALIDATOR_ERROR , message: '_getValidatorFunc returned no function' }});
+                                    }
+
                                     //TODO - CHECK IOS AND ANDROID TRANSACTIONS DATA
                                     // if (angular.isDefined(product.transaction.orderId)){
                                     // }
