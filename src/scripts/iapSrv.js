@@ -414,7 +414,6 @@
                                         verifyRecieptProm = $q.when(true);
                                     }
 
-
                                     verifyRecieptProm.then(function(res){
                                         console.log('verifyRecieptProm returned ' + res);
                                         if (res){
@@ -550,6 +549,58 @@
                             iapSrv.appProductsArr.forEach(function (appProduct) {
                                 $window.store.when(appProduct.id).verified(function(product){
                                     console.log('purchase verified');
+                                    var validator = _getValidatorFunc();
+                                    if (!angular.isFunction(validator)){
+                                        console.error('_getValidatorFunc returned no function');
+                                        if (angular.isDefined(iapSrv.purchaseInProgressDfd)){
+                                            iapSrv.purchaseInProgressDfd.reject(false);
+                                        }
+                                        iapSrv.isPurchaseInProgress = false;
+                                        $ionicLoading.hide();
+                                        console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                                    }
+
+                                            //TODO - CHECK IOS AND ANDROID TRANSACTIONS DATA
+                                            // if (angular.isDefined(product.transaction.orderId)){
+                                            // }
+
+                                            var cleanProduct = _setUndefinedPropertiesToNull(angular.copy(product),true);
+                                            validator(cleanProduct).then(function(res){
+                                                $ionicLoading.hide();
+                                                if (res){
+                                                    if (angular.isDefined(iapSrv.purchaseInProgressDfd)){
+                                                        iapSrv.purchaseInProgressDfd.resolve(product);
+                                                    }
+                                                    iapSrv.isPurchaseInProgress = false;
+                                                    $ionicLoading.hide();
+                                                    console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                                                    callback(true, product);
+                                                }
+                                                else{
+                                                    console.error('store validator returned false');
+                                                    if (angular.isDefined(iapSrv.purchaseInProgressDfd)){
+                                                        iapSrv.purchaseInProgressDfd.reject(false);
+                                                    }
+                                                    iapSrv.isPurchaseInProgress = false;
+                                                    $ionicLoading.hide();
+                                                    console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                                                    callback(false, {error: { code: iapSrv.IapErrorCodeEnum.VALIDATOR_FALSE , message: 'store validator returned false' }});
+                                                }
+                                            }).catch(function(err){
+                                                console.error('error in store validator: ' + err);
+                                                if (angular.isDefined(iapSrv.purchaseInProgressDfd)){
+                                                    iapSrv.purchaseInProgressDfd.reject(err);
+                                                }
+                                                iapSrv.isPurchaseInProgress = false;
+                                                $ionicLoading.hide();
+                                                console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                                                callback(false, {error: { code: iapSrv.IapErrorCodeEnum.VALIDATOR_ERROR , message: err }});
+                                            });
+                                        
+
+
+
+
                                     product.finish();
                                 });
                             });
