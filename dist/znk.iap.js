@@ -121,11 +121,7 @@
         
         var productsGetter;
         var validatorFuncRef;
-        // var _availProductsFallback;
         var enableNoStoreMode;
-        // this.setProductsFallback = function(availProductsFallback){
-        //     _availProductsFallback = availProductsFallback;
-        // };
         var enableRecipetValidation=false;
         var validationUrl;
 
@@ -192,9 +188,6 @@
                     products: {},
                     //application products (not store products)
                     appProductsArr: [],
-                    //loadingError: false,
-                    // isShowingModal: false,
-                    // currentErrorPopup: undefined,
                     isPurchaseInProgress: false,
                     purchaseInProgressDfd: undefined,
                     IapErrorCodeEnum: {
@@ -206,23 +199,6 @@
                           RECIPT_NOT_APPROVED: 5
                     }
                 };
-
-                // function _setUndefinedPropertiesToNull(obj, deepCleanup) {
-                //     for (var property in obj) {
-                //         if (obj.hasOwnProperty(property)) {
-                //             if (deepCleanup && typeof obj[property] === 'object'){
-                //                 _setUndefinedPropertiesToNull(obj[property]);
-                //             }
-                //             else{
-                //                 if (angular.isUndefined(obj[property])){
-                //                     console.log('property is undefined, property=' + property);
-                //                     obj[property] = null;
-                //                 }
-                //             }
-                //         }
-                //     }
-                //     return obj;
-                // }
 
                 function _verifyReciept(transaction){
 
@@ -358,7 +334,6 @@
                             return iapSrv.purchaseInProgressDfd.promise;
                         }
                         
-                        // iapSrv.isShowingModal=true;
                         var product = iapSrv.products[productId];
 
                         if (product){
@@ -368,24 +343,9 @@
                                 iapSrv.isPurchaseInProgress = false;
                                 $ionicLoading.hide();
                                 console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
-                                
-                                // if (iapSrv.currentErrorPopup){
-                                //     iapSrv.currentErrorPopup.close();
-                                // }
-
-                                // iapSrv.currentErrorPopup.then(function(){
-                                //     iapSrv.currentErrorPopup = undefined;
-                                // });
                             });
                         }
                         else{
-                            // if (iapSrv.currentErrorPopup){
-                            //     iapSrv.currentErrorPopup.close();
-                            // }
-
-                            // iapSrv.currentErrorPopup.then(function(){
-                            //     iapSrv.currentErrorPopup = undefined;
-                            // }); 
                             console.log('error in purchase, no product');
                             iapSrv.purchaseInProgressDfd.reject();
                             iapSrv.isPurchaseInProgress = false;
@@ -459,7 +419,6 @@
                                iapStoreReadyDfd.reject(); 
                             }
                         }
-                        // iapSrv.loadingError = true;
                         return;
                     }
                     else{
@@ -483,7 +442,6 @@
                                 iapStoreReadyDfd.reject(err);
                             }
                         }
-                        // iapSrv.loadingError = true;
                         return;
                     });
                     initAppProductsForStoreProm.then(function(appProductsArr){
@@ -536,35 +494,16 @@
                                             callback(true,product);
                                         }
                                         else{
-                                            // console.error('store recipt no validation');
-                                            // if (angular.isDefined(iapSrv.purchaseInProgressDfd)){
-                                            //     iapSrv.purchaseInProgressDfd.reject();
-                                            // }
-                                            // iapSrv.isPurchaseInProgress = false;
-                                            // $ionicLoading.hide();
-                                            // console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                                             callback(false, {error: { code: iapSrv.IapErrorCodeEnum.RECIPT_NOT_APPROVED , message: 'recipt not approved' }});
                                         }
                                     })
                                     .catch(function(err){
-                                        // console.error('error in store validator: ' + err);
-                                        // if (angular.isDefined(iapSrv.purchaseInProgressDfd)){
-                                        //     iapSrv.purchaseInProgressDfd.reject(err);
-                                        // }
-                                        // iapSrv.isPurchaseInProgress = false;
-                                        // $ionicLoading.hide();
-                                        // console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                                        console.error('error in verifyRecieptProm validator: ' + err);
                                         callback(false, {error: { code: iapSrv.IapErrorCodeEnum.VALIDATOR_ERROR , message: err }});
                                     });                                    
                                 }
                                 else{
-                                    // console.log('no transaction');
-                                    // if (angular.isDefined(iapSrv.purchaseInProgressDfd)){
-                                    //     iapSrv.purchaseInProgressDfd.reject();
-                                    // }
-                                    // iapSrv.isPurchaseInProgress = false;
-                                    // $ionicLoading.hide();
-                                    // console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                                    console.log('no transaction in validator');
                                     callback(false, {error: { code: iapSrv.IapErrorCodeEnum.VALIDATOR_NO_TRANSACTION , message: 'no transaction' }});
                                 }
                             };
@@ -633,7 +572,6 @@
                                         // if (angular.isDefined(product.transaction.orderId)){
                                         // }
 
-                                        // var cleanProduct = _setUndefinedPropertiesToNull(angular.copy(product),true);
                                         validator(product).then(function(res){
                                             $ionicLoading.hide();
                                             if (res){
@@ -780,39 +718,6 @@
                                         iapStoreReadyDfd.reject(err);
                                     }
                                 }
-                                // console.log('isShowingModal: ' + iapSrv.isShowingModal);
-
-                                // if (err.code !== $window.store.ERR_PURCHASE && iapSrv.isShowingModal){
-                                //     iapSrv.loadingError = true;
-
-                                //     // if (!iapSrv.currentErrorPopup){
-                                //     //     iapSrv.currentErrorPopup = $ionicPopup.alert({
-                                //     //         title: 'Error',
-                                //     //         template: 'There was an error with the store. Please try again later.',
-                                //     //         okText: 'OK',
-                                //     //         okType: 'button-default'
-                                //     //     });
-                                //     //     iapSrv.currentErrorPopup.then(function(){
-                                //     //         iapSrv.currentErrorPopup = undefined;
-                                //     //     });
-                                //     // }
-                                // }
-
-                                // if (err.code && iapSrv.isShowingModal){
-                                //     iapSrv.loadingError = true;
-
-                                //     if (!iapSrv.currentErrorPopup){
-                                //         iapSrv.currentErrorPopup = $ionicPopup.alert({
-                                //             title: 'Error',
-                                //             template: 'There was an error with the store. Please try again later.',
-                                //             okText: 'OK',
-                                //             okType: 'button-default'
-                                //         });
-                                //         iapSrv.currentErrorPopup.then(function(){
-                                //             iapSrv.currentErrorPopup = undefined;
-                                //         });
-                                //     }
-                                // }
                             });
                            $window.store.refresh();
                         }
@@ -847,9 +752,5 @@
                 return iapSrv;
             }
         ];
-
-
-
-
     }]);
 })(angular);
