@@ -349,7 +349,7 @@
                             //TODO
                             iapSrv.initializedStore = true;
 
-                            $window.store.verbosity = false ? $window.store.DEBUG : $window.store.QUIET;
+                            $window.store.verbosity = ENV.debug ? $window.store.DEBUG : $window.store.QUIET;
 
                             /////////////////////////////
                             /////////////////////////////
