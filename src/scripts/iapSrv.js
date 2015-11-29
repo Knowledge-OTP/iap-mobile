@@ -530,6 +530,7 @@
 
                             var purchaseCancelled = function purchaseCancelled(){
                                 console.log('purchase cancelled');
+                                $analytics.eventTrack('cancel-purchase',{ category: 'purchase' , label: 'cancelled' });
                                 if (angular.isDefined(iapSrv.purchaseInProgressDfd)){
                                     iapSrv.purchaseInProgressDfd.reject({code:iapSrv.IapErrorCodeEnum.CANCELLED,  message: 'purchase cancelled'});
                                 }
@@ -577,6 +578,7 @@
                                 });
                                 $window.store.when(appProduct.id).finished(function(product){
                                     console.log('product finished: ' + product.id);
+                                    $analytics.eventTrack('purchased', { category: 'purchase', label:'purchased' });
                                 });
                             });
 
@@ -587,9 +589,9 @@
                             /////////////////////////////
 
                             $window.store.error(function(err){
-                                console.log('store error ' + err.code + ': ' + err.message);
+                                console.log('store-error ' + err.code + ': ' + err.message);
                                 console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
-                                
+                                $analytics.eventTrack('store error', { category: 'purchase', label: err});
                                 if (angular.isDefined(iapSrv.purchaseInProgressDfd)){
                                     iapSrv.purchaseInProgressDfd.reject(err);
                                 }
