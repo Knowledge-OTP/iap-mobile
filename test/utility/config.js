@@ -7,7 +7,6 @@
     var arr=[];
 
     angular.module('test', ['znk.iap']).config(function(IapSrvProvider){
-        IapSrvProvider.setProductsFallback(availProductsFallback );
         IapSrvProvider.registerProducts(arr);	
         IapSrvProvider.setValidator(function setValidatorFunc(){console.log('setValidatorFunc');});
     }).constant('availProductsFallback',availProductsFallback );
