@@ -223,6 +223,7 @@
                         if (product){
                             $window.store.order(product.id).error(function(err){
                                 console.log('error in purchase, store.order, err:' + err);
+                                $analytics.eventTrack('store-order-error', { category: 'purchase', label: err});
                                 iapSrv.purchaseInProgressDfd.reject(err);
                                 iapSrv.isPurchaseInProgress = false;
                                 $ionicLoading.hide();
@@ -441,6 +442,7 @@
                             iapSrv.appProductsArr.forEach(function (appProduct) {
                                 $window.store.when(appProduct.id).verified(function(product){
                                     console.log('purchase verified');
+                                    $analytics.eventTrack('purchase-recipt-verified',{ category: 'purchase', label:'verified'});
                                     var validator = _getValidatorFunc();
                                     if (!angular.isFunction(validator)){
                                         console.error('_getValidatorFunc returned no function');
@@ -479,6 +481,7 @@
                                             }
                                         }).catch(function(err){
                                             console.error('error in app validator: ' + err);
+                                            $analytics.eventTrack('store-validator-error', { category: 'purchase', label: err});
                                             if (angular.isDefined(iapSrv.purchaseInProgressDfd)){
                                                 iapSrv.purchaseInProgressDfd.reject(err);
                                             }
@@ -499,6 +502,7 @@
                             iapSrv.appProductsArr.forEach(function (appProduct) {
                                 $window.store.when(appProduct.id).unverified(function(){
                                     console.log('purchase unverified');
+                                    $analytics.eventTrack('purchase-unverified', { category: 'purchase', label: 'unverified'});
                                     console.error('store recipt no validated');
                                     if (angular.isDefined(iapSrv.purchaseInProgressDfd)){
                                         iapSrv.purchaseInProgressDfd.reject();
@@ -578,7 +582,9 @@
                                 });
                                 $window.store.when(appProduct.id).finished(function(product){
                                     console.log('product finished: ' + product.id);
-                                    $analytics.eventTrack('purchased', { category: 'purchase', label:'purchased' });
+                                    $analytics.eventTrack('purchased', { category: 'purchase', label:product.id });
+                                    //hack - for android purposes only
+                                    $analytics.pageTrack('product-purchased/' + product.id);
                                 });
                             });
 
@@ -591,7 +597,7 @@
                             $window.store.error(function(err){
                                 console.log('store-error ' + err.code + ': ' + err.message);
                                 console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
-                                $analytics.eventTrack('store error', { category: 'purchase', label: err});
+                                $analytics.eventTrack('store-error', { category: 'purchase', label: err});
                                 if (angular.isDefined(iapSrv.purchaseInProgressDfd)){
                                     iapSrv.purchaseInProgressDfd.reject(err);
                                 }
