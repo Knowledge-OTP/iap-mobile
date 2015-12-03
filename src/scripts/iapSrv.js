@@ -43,7 +43,7 @@
                     if (angular.isDefined(iapStoreReadyDfd)){
                         iapStoreReadyDfd.reject('store timeout');
                     }
-                },10000);
+                },15000);
                 if (enableNoStoreMode || isWeb){
                     if(!iapStoreTimedOut){
                         $timeout.cancel(iapStoreReadyTimeout);
