@@ -147,12 +147,12 @@
 
                 iapSrv.getStoreProduct = function(productId){
                     return iapStoreReadyProm.then(function(){
-                        if (_isValidProduct(iapSrv.products[productId])){
+                        // if (_isValidProduct(iapSrv.products[productId])){
                             return iapSrv.products[productId];    
-                        }
-                        else{
-                            return null;
-                        }
+                        // }
+                        // else{
+                        //     return null;
+                        // }
                     });
                 };
 
@@ -173,9 +173,9 @@
                         }
                         else{
                             for(var propertyName in iapSrv.products) {
-                                if (_isValidProduct(iapSrv.products[propertyName])){
+                                // if (_isValidProduct(iapSrv.products[propertyName])){
                                     storeProductsArr.push(angular.copy(iapSrv.products[propertyName]));
-                                }
+                                // }
                             }
                         }
                         return storeProductsArr;
