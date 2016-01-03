@@ -106,9 +106,9 @@
                                 };
                                 break;
                         }
-
-                        return $http.post(validationUrl+'verify/'+ platform, transactionData).then(function(res) {
-                           return res;
+                        
+                        return $http.post(validationUrl+'verify/'+ platform, {'transaction': transaction}).then(function(res) {
+                            return res;
                         }, function(error) {
                                return $q.reject(error);
                         });
@@ -264,7 +264,7 @@
                 }
 
                 function _getPlatform(transactionType) {
-                    switch (transactionType) {
+                    switch (angular.lowercase(transactionType)) {
                         case 'ios-appstore':
                             return 'apple';
                         case 'android-playstore':
@@ -375,8 +375,9 @@
 
                                     verifyRecieptProm.then(function(res){
                                         console.log('verifyRecieptProm returned ' + res);
-                                        if (res){
-                                            callback(true,product);
+                                        if (res && res.data && res.data.ok){
++                                               callback(true,res.data.data);
+                                            
                                         }
                                         else{
                                             callback(false, {error: { code: iapSrv.IapErrorCodeEnum.RECIPT_NOT_APPROVED , message: 'recipt not approved' }});
@@ -392,6 +393,10 @@
                                     callback(false, {error: { code: iapSrv.IapErrorCodeEnum.VALIDATOR_NO_TRANSACTION , message: 'no transaction' }});
                                 }
                             };
+
+                            // Example for url validator
+                            // $window.store.validator = 'https://znk-apps-backend-dev.azurewebsites.net/verify/google';
++                               
 
                             /////////////////////////////
                             /////////////////////////////
