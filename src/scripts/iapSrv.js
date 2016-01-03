@@ -376,8 +376,7 @@
                                     verifyRecieptProm.then(function(res){
                                         console.log('verifyRecieptProm returned ' + res);
                                         if (res && res.data && res.data.ok){
-+                                               callback(true,res.data.data);
-                                            
+                                            callback(true,res.data.data);
                                         }
                                         else{
                                             callback(false, {error: { code: iapSrv.IapErrorCodeEnum.RECIPT_NOT_APPROVED , message: 'recipt not approved' }});
@@ -396,7 +395,7 @@
 
                             // Example for url validator
                             // $window.store.validator = 'https://znk-apps-backend-dev.azurewebsites.net/verify/google';
-+                               
+                               
 
                             /////////////////////////////
                             /////////////////////////////
