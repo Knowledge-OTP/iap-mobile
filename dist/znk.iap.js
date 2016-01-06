@@ -10,8 +10,8 @@
     'use strict';
 
     angular.module('znk.iap').factory('InAppPurchaseHelperSrv', [
-        '$q', '$rootScope', '$injector', 'ENV',
-        function ($q, $rootScope, $injector, ENV) {
+        '$q', '$rootScope', '$injector', 'ENV','$log',
+        function ($q, $rootScope, $injector, ENV, $log) {
             var InAppPurchaseHelperSrv = {};
             var IAP_PATH = 'iap';
             var firebaseAppScopeName = ENV.firebaseAppScopeName;
@@ -21,7 +21,7 @@
                 var StorageSrv = $injector.get('StorageSrv');
                 return StorageSrv.get(IAP_PATH).then(function(iapObj){
                     if(!iapObj.products || !iapObj.products[firebaseAppScopeName] || !iapObj.products[firebaseAppScopeName].length){
-                        console.error('Failed to retrieve products from db');
+                        $log.error('Failed to retrieve products from db');
                         return $q.reject('Failed to retrieve products from db');
                     }
                     return iapObj.products[firebaseAppScopeName];
@@ -373,7 +373,7 @@
                 // iapSrv.refreshStore = function refreshStore(){
 
                 //     if (InAppPurchaseHelperSrv.canUpgrade()){
-                //         console.log('refresh store initiated');
+                //         $log.debug('refresh store initiated');
                 //         if (!iapSrv.initializedStore){
                 //             iapSrv.initStore();
                 //         }
@@ -382,7 +382,7 @@
                 //         }
                 //     }
                 //     else{
-                //         console.log('user cannot upgrade at this time');
+                //         $log.debug('user cannot upgrade at this time');
                 //     }
                 // };
 
@@ -600,7 +600,7 @@
                                     $analytics.eventTrack('purchase-recipt-verified',{ category: 'purchase', label:'verified'});
                                     var validator = _getValidatorFunc();
                                     if (!angular.isFunction(validator)){
-                                        console.error('_getValidatorFunc returned no function');
+                                        $log.error('_getValidatorFunc returned no function');
                                         if (angular.isDefined(iapSrv.purchaseInProgressDfd)){
                                             iapSrv.purchaseInProgressDfd.reject(false);
                                         }
