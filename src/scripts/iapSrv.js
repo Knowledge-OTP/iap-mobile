@@ -8,6 +8,7 @@
         var enableNoStoreMode;
         var enableRecipetValidation=false;
         var validationUrl;
+        var $log = angular.injector(['ng']).get('$log');
 
         this.registerProducts = function(fnOrArr){
             productsGetter = fnOrArr;
@@ -19,7 +20,7 @@
         
         this.setNoStoreMode = function(shouldEnableNoStoreMode){
             enableNoStoreMode = shouldEnableNoStoreMode;
-            console.log('IAP EnableNoStoreMode: ' + enableNoStoreMode);
+            $log.debug('IAP EnableNoStoreMode: ' + enableNoStoreMode);
         };
 
         this.setEnableRecipetValidation = function(shouldEnableRecipetValidation){
@@ -127,7 +128,7 @@
                 }
 
                 function _getAppProducts(){
-                    console.log('_getAppProducts');
+                    $log.debug('_getAppProducts');
                     return $injector.invoke(productsGetter);
                 }
 
@@ -182,12 +183,12 @@
                 
                 iapSrv.purchase = function(productId){
 
-                    console.log('starting purchase');
+                    $log.debug('starting purchase');
 
                     return iapStoreReadyProm.then(function(){
-                        console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                        $log.debug('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                         if (iapSrv.isPurchaseInProgress){
-                            console.log('purchase is already in progress');
+                            $log.debug('purchase is already in progress');
                             return $q.reject(false);
                         }
                         iapSrv.isPurchaseInProgress = true;
@@ -205,26 +206,26 @@
 
                             validator(mockProductForWeb).then(function(res){
                                 if (res){
-                                    console.log('mock purchase completed');
+                                    $log.debug('mock purchase completed');
                                     iapSrv.purchaseInProgressDfd.resolve(appProduct);
                                     iapSrv.isPurchaseInProgress = false;
                                     $ionicLoading.hide();
-                                    console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                                    $log.debug('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                                 }
                                 else{
-                                    console.log('error in validating mock purchase');
+                                    $log.debug('error in validating mock purchase');
                                     iapSrv.purchaseInProgressDfd.reject();
                                     iapSrv.isPurchaseInProgress = false;
                                     $ionicLoading.hide();
-                                    console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                                    $log.debug('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                                 }
                             })
                             .catch(function(err){
-                                console.log('error in mock purchase, err: ' + err);
+                                $log.debug('error in mock purchase, err: ' + err);
                                 iapSrv.purchaseInProgressDfd.reject(err);
                                 iapSrv.isPurchaseInProgress = false;
                                 $ionicLoading.hide();
-                                console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                                $log.debug('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                             });
                             return iapSrv.purchaseInProgressDfd.promise;
                         }
@@ -233,20 +234,20 @@
 
                         if (product){
                             $window.store.order(product.id).error(function(err){
-                                console.log('error in purchase, store.order, err:' + err);
+                                $log.debug('error in purchase, store.order, err:' + err);
                                 $analytics.eventTrack('store-order-error', { category: 'purchase', label: err});
                                 iapSrv.purchaseInProgressDfd.reject(err);
                                 iapSrv.isPurchaseInProgress = false;
                                 $ionicLoading.hide();
-                                console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                                $log.debug('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                             });
                         }
                         else{
-                            console.log('error in purchase, no product');
+                            $log.debug('error in purchase, no product');
                             iapSrv.purchaseInProgressDfd.reject();
                             iapSrv.isPurchaseInProgress = false;
                             $ionicLoading.hide();
-                            console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                            $log.debug('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                         }
                         return iapSrv.purchaseInProgressDfd.promise;
                     });
@@ -270,7 +271,7 @@
                 // };
 
                 function initAppProductsForStore(){
-                    console.log('init app products for the store');
+                    $log.debug('init app products for the store');
                     return _getAppProducts();
                 }
 
@@ -296,20 +297,20 @@
                         initAppProductsForStore().then(function(appProductsArr){
                             if (angular.isArray(appProductsArr) && appProductsArr.length>0){
                                 iapSrv.appProductsArr = appProductsArr;
-                                console.log('app products loaded');
+                                $log.debug('app products loaded');
                             }
                             else{
-                                console.error('failed to load app products');
+                                $log.error('failed to load app products');
                             }
                         })
                         .catch(function(err) {
-                            console.error('failed to load app products, err:' + err);
+                            $log.error('failed to load app products, err:' + err);
                         });
                         return;
                     }
                     
                     if (!$window.store){
-                        console.log('store is not available');
+                        $log.debug('store is not available');
                         if (angular.isDefined(iapStoreReadyDfd)){
                             if (!iapStoreTimedOut){
                                iapStoreReadyDfd.reject(); 
@@ -318,7 +319,7 @@
                         return;
                     }
                     else{
-                        console.log('initializing store');
+                        $log.debug('initializing store');
                     }
 
                     if (enableRecipetValidation){
@@ -332,7 +333,7 @@
 
                     var initAppProductsForStoreProm = initAppProductsForStore();
                     initAppProductsForStoreProm.catch(function(err) {
-                        console.error('failed to load app products, err:' + err);
+                        $log.error('failed to load app products, err:' + err);
                         if (angular.isDefined(iapStoreReadyDfd)){
                             if (!iapStoreTimedOut){
                                 iapStoreReadyDfd.reject(err);
@@ -344,10 +345,10 @@
 
                         if (angular.isArray(appProductsArr) && appProductsArr.length>0){
                             iapSrv.appProductsArr = appProductsArr;
-                            console.log('app products loaded');
+                            $log.debug('app products loaded');
                         }
                         else{
-                            console.error('failed to load app products');
+                            $log.error('failed to load app products');
                             if (angular.isDefined(iapStoreReadyDfd)){
                                 if (!iapStoreTimedOut){
                                     iapStoreReadyDfd.reject();
@@ -370,14 +371,18 @@
                             
                             $window.store.validator = function(product, callback){
 
-                                console.log('performing validator');
+                                $log.debug('performing validator');
+                                if (product.type === $window.store.PAID_SUBSCRIPTION && product.owned){
+                                    callback(false, {code: $window.store.PURCHASE_EXPIRED, error: { code: iapSrv.IapErrorCodeEnum.RECIPT_NOT_APPROVED , message: 'subscription already owned' }});
+                                    return;
+                                }
                                 var verifyRecieptProm;
                                 
                                 if (product.transaction){
-                                    console.log('new transaction, transaction:' + JSON.stringify(product.transaction));
+                                    $log.debug('new transaction, transaction:' + JSON.stringify(product.transaction));
                                     
                                     if (enableRecipetValidation){
-                                        console.log('enableRecipetValidation is true');
+                                        $log.debug('enableRecipetValidation is true');
                                         verifyRecieptProm = _verifyReciept(product.transaction);
                                     }
                                     else{
@@ -385,7 +390,7 @@
                                     }
 
                                     verifyRecieptProm.then(function(res){
-                                        console.log('verifyRecieptProm returned ' + res);
+                                        $log.debug('verifyRecieptProm returned ' + res);
                                         if (res && res.data && res.data.ok){
                                             callback(true,res.data.data);
                                         }
@@ -399,7 +404,7 @@
                                         }
                                     })
                                     .catch(function(err){
-                                        console.error('error in verifyRecieptProm validator: ' + err);
+                                        $log.error('error in verifyRecieptProm validator: ' + err);
                                         if (product.type === $window.store.PAID_SUBSCRIPTION){
                                             callback(false, {code: $window.store.PURCHASE_EXPIRED, error: { code: iapSrv.IapErrorCodeEnum.RECIPT_NOT_APPROVED , message: 'recipt not approved' }});
                                         }
@@ -409,7 +414,7 @@
                                     });                                    
                                 }
                                 else{
-                                    console.log('no transaction in validator');
+                                    $log.debug('no transaction in validator');
                                     if (product.type === $window.store.PAID_SUBSCRIPTION){
                                         callback(false, {code: $window.store.PURCHASE_EXPIRED, error: { code: iapSrv.IapErrorCodeEnum.VALIDATOR_NO_TRANSACTION , message: 'no transaction in validator' }});
                                     }
@@ -431,7 +436,7 @@
 
                             iapSrv.appProductsArr.forEach(function (appProduct){
 
-                                console.log('registering product: ' + JSON.stringify(appProduct));
+                                $log.debug('registering product: ' + JSON.stringify(appProduct));
                                 $window.store.register({
                                     id: appProduct.id,
                                     alias: appProduct.alias,
@@ -446,7 +451,7 @@
                             /////////////////////////////
 
                             var purchaseApproved = function purchaseApproved(product){
-                                console.log('purchase approved');
+                                $log.debug('purchase approved');
                                 $analytics.eventTrack('purchase-approved', {category: 'purchase', label: 'approved'});
                                 product.verify();
                             };
@@ -463,7 +468,7 @@
                                 });
 
                                 $window.store.when($window.store.PAID_SUBSCRIPTION).updated(function (product) {
-                                    console.log('---------- proudctId:' + product.id + ',owned:' + product.owned);
+                                    $log.debug('---------- proudctId:' + product.id + ',owned:' + product.owned);
                                  });
                             });
 
@@ -475,7 +480,7 @@
 
                             iapSrv.appProductsArr.forEach(function (appProduct) {
                                 $window.store.when(appProduct.id).verified(function(product){
-                                    console.log('purchase verified');
+                                    $log.debug('purchase verified');
                                     $analytics.eventTrack('purchase-recipt-verified',{ category: 'purchase', label:'verified'});
                                     var validator = _getValidatorFunc();
                                     if (!angular.isFunction(validator)){
@@ -485,7 +490,7 @@
                                         }
                                         iapSrv.isPurchaseInProgress = false;
                                         $ionicLoading.hide();
-                                        console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                                        $log.debug('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                                     }
                                     else{
                                         //TODO - CHECK IOS AND ANDROID TRANSACTIONS DATA
@@ -495,33 +500,33 @@
                                         validator(product).then(function(res){
                                             $ionicLoading.hide();
                                             if (res){
-                                                console.log('app validator returned true');
+                                                $log.debug('app validator returned true');
                                                 if (angular.isDefined(iapSrv.purchaseInProgressDfd)){
                                                     iapSrv.purchaseInProgressDfd.resolve(product);
                                                 }
                                                 iapSrv.isPurchaseInProgress = false;
                                                 $ionicLoading.hide();
-                                                console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                                                $log.debug('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                                                 product.finish();
                                             }
                                             else{
-                                                console.error('app validator returned false');
+                                                $log.error('app validator returned false');
                                                 if (angular.isDefined(iapSrv.purchaseInProgressDfd)){
                                                     iapSrv.purchaseInProgressDfd.reject(false);
                                                 }
                                                 iapSrv.isPurchaseInProgress = false;
                                                 $ionicLoading.hide();
-                                                console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                                                $log.debug('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                                             }
                                         }).catch(function(err){
-                                            console.error('error in app validator: ' + err);
+                                            $log.error('error in app validator: ' + err);
                                             $analytics.eventTrack('store-validator-error', { category: 'purchase', label: err});
                                             if (angular.isDefined(iapSrv.purchaseInProgressDfd)){
                                                 iapSrv.purchaseInProgressDfd.reject(err);
                                             }
                                             iapSrv.isPurchaseInProgress = false;
                                             $ionicLoading.hide();
-                                            console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                                            $log.debug('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                                         });
                                     }
                                 });
@@ -535,15 +540,15 @@
 
                             iapSrv.appProductsArr.forEach(function (appProduct) {
                                 $window.store.when(appProduct.id).unverified(function(){
-                                    console.log('purchase unverified');
+                                    $log.debug('purchase unverified');
                                     $analytics.eventTrack('purchase-unverified', { category: 'purchase', label: 'unverified'});
-                                    console.error('store recipt no validated');
+                                    $log.error('store recipt no validated');
                                     if (angular.isDefined(iapSrv.purchaseInProgressDfd)){
                                         iapSrv.purchaseInProgressDfd.reject();
                                     }
                                     iapSrv.isPurchaseInProgress = false;
                                     $ionicLoading.hide();
-                                    console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                                    $log.debug('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                                             
                                 });
                             });
@@ -556,7 +561,7 @@
 
                             iapSrv.appProductsArr.forEach(function (appProduct) {
                                 $window.store.when(appProduct.id).initiated(function(){
-                                    console.log('purchase initiated...');                              
+                                    $log.debug('purchase initiated...');                              
                                 });
                             });
 
@@ -567,14 +572,14 @@
                             /////////////////////////////
 
                             var purchaseCancelled = function purchaseCancelled(){
-                                console.log('purchase cancelled');
+                                $log.debug('purchase cancelled');
                                 $analytics.eventTrack('cancel-purchase',{ category: 'purchase' , label: 'cancelled' });
                                 if (angular.isDefined(iapSrv.purchaseInProgressDfd)){
                                     iapSrv.purchaseInProgressDfd.reject({code:iapSrv.IapErrorCodeEnum.CANCELLED,  message: 'purchase cancelled'});
                                 }
                                 iapSrv.isPurchaseInProgress = false;
                                 $ionicLoading.hide();
-                                console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                                $log.debug('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                             };
                             
                             /////////////////////////////
@@ -588,7 +593,7 @@
                                     purchaseCancelled(product);                               
                                 });
                                 $window.store.when(appProduct.id).refunded(function(product){
-                                    console.log('purchase refunded, product:' + product.id);                               
+                                    $log.debug('purchase refunded, product:' + product.id);                               
                                 });
                             });
 
@@ -599,7 +604,7 @@
                             /////////////////////////////
 
                             $window.store.ready(function(){
-                                console.log('-----store is ready-----');
+                                $log.debug('-----store is ready-----');
                                 if(!iapStoreTimedOut){
                                     $timeout.cancel(iapStoreReadyTimeout);
                                     if (angular.isDefined(iapStoreReadyDfd)){
@@ -611,11 +616,11 @@
 
                             iapSrv.appProductsArr.forEach(function (appProduct){
                                 $window.store.when(appProduct.id).updated(function(product){
-                                    console.log('product updated: ' + product.id);
+                                    $log.debug('product updated: ' + product.id);
                                     iapSrv.products[product.id] = product;
                                 });
                                 $window.store.when(appProduct.id).finished(function(product){
-                                    console.log('product finished: ' + product.id);
+                                    $log.debug('product finished: ' + product.id);
                                     $analytics.eventTrack('purchased', { category: 'purchase', label:product.id });
                                     //hack - for android purposes only
                                     $analytics.pageTrack('product-purchased/' + product.id);
@@ -629,15 +634,15 @@
                             /////////////////////////////
 
                             $window.store.error(function(err){
-                                console.log('store-error ' + err.code + ': ' + err.message);
-                                console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                                $log.debug('store-error ' + err.code + ': ' + err.message);
+                                $log.debug('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                                 $analytics.eventTrack('store-error', { category: 'purchase', label: err});
                                 if (angular.isDefined(iapSrv.purchaseInProgressDfd)){
                                     iapSrv.purchaseInProgressDfd.reject(err);
                                 }
                                 iapSrv.isPurchaseInProgress = false;
                                 $ionicLoading.hide();
-                                console.log('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
+                                $log.debug('purchase: isPurchaseInProgress=' + iapSrv.isPurchaseInProgress);
                             
                                 if (angular.isDefined(iapStoreReadyDfd)){
                                     if (!iapStoreTimedOut){
@@ -654,19 +659,19 @@
                                 iapStoreReadyDfd.reject(err);
                             }
                         }
-                        console.error('failed to init store products, err=' + err);
+                        $log.error('failed to init store products, err=' + err);
                     });
 
                 };
 
                 function offlineHandler() {
-                    console.log('not online');
+                    $log.debug('not online');
                     isOnline = false;
                 }
                 document.addEventListener('offline', offlineHandler, false);
 
                 function onlineHandler() {
-                    console.log('online');
+                    $log.debug('online');
                     isOnline = true;
                 }
                 document.addEventListener('online', onlineHandler, false);
