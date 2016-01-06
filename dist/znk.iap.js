@@ -117,17 +117,27 @@
 (function (angular) {
     'use strict';
 
-    angular.module('znk.iap').provider('IapSrv',[function () {
+    angular.module('znk.iap').provider('IapSrv', [ 
+        '$logProvider',
+        function ($logProvider) {
         
         var productsGetter;
         var validatorFuncRef;
         var enableNoStoreMode;
         var enableRecipetValidation=false;
+        var enableDebug =false;
         var validationUrl;
+
+        $logProvider.debugEnabled(enableDebug);
         var $log = angular.injector(['ng']).get('$log');
 
         this.registerProducts = function(fnOrArr){
             productsGetter = fnOrArr;
+        };
+
+        this.enableDebug = function(shouldEnableDebug){
+            enableDebug = shouldEnableDebug;
+            $logProvider.debugEnabled(enableDebug);
         };
 
         this.setValidator = function(func){
