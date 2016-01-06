@@ -11,12 +11,17 @@
         var enableRecipetValidation=false;
         var enableDebug =false;
         var validationUrl;
+        var advertiserRefId = '182516';
 
         $logProvider.debugEnabled(enableDebug);
         var $log = angular.injector(['ng']).get('$log');
 
         this.registerProducts = function(fnOrArr){
             productsGetter = fnOrArr;
+        };
+
+        this.setAdvertiserRefId = function(advertiserRefId){
+            advertiserRefId = advertiserRefId;
         };
 
         this.enableDebug = function(shouldEnableDebug){
@@ -634,6 +639,19 @@
                                     $analytics.eventTrack('purchased', { category: 'purchase', label:product.id });
                                     //hack - for android purposes only
                                     $analytics.pageTrack('product-purchased/' + product.id);
+
+                                    if ($window.plugins && $window.plugins.matPlugin){
+                                        $window.plugins.matPlugin.measureEvent({
+                                            'name': 'purchased',
+                                            'revenue': 1,
+                                            'currency': 'USD',
+                                            'advertiserRefId': advertiserRefId,
+                                            'eventItems': [{
+                                                'item':product.id,
+                                                'quantity':1,
+                                            }]
+                                        });
+                                    }
                                 });
                             });
 
