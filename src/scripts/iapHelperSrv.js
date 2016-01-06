@@ -2,8 +2,8 @@
     'use strict';
 
     angular.module('znk.iap').factory('InAppPurchaseHelperSrv', [
-        '$q', '$rootScope', '$injector', 'ENV',
-        function ($q, $rootScope, $injector, ENV) {
+        '$q', '$rootScope', '$injector', 'ENV','$log',
+        function ($q, $rootScope, $injector, ENV, $log) {
             var InAppPurchaseHelperSrv = {};
             var IAP_PATH = 'iap';
             var firebaseAppScopeName = ENV.firebaseAppScopeName;
@@ -13,7 +13,7 @@
                 var StorageSrv = $injector.get('StorageSrv');
                 return StorageSrv.get(IAP_PATH).then(function(iapObj){
                     if(!iapObj.products || !iapObj.products[firebaseAppScopeName] || !iapObj.products[firebaseAppScopeName].length){
-                        console.error('Failed to retrieve products from db');
+                        $log.error('Failed to retrieve products from db');
                         return $q.reject('Failed to retrieve products from db');
                     }
                     return iapObj.products[firebaseAppScopeName];
