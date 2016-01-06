@@ -200,15 +200,9 @@
                     }
                 };
 
-                function _isValidProduct(product){
-                    if (product && product.title && product.price){
-                        return true;
-                    }
-                    else{
-                        return false;
-                    }
-
-                }
+                // function _isValidProduct(product){
+                //     return (product && product.title && product.price){
+                // }
 
                 function _verifyReciept(transaction){
 
@@ -263,12 +257,12 @@
 
                 iapSrv.getStoreProduct = function(productId){
                     return iapStoreReadyProm.then(function(){
-                        if (_isValidProduct(iapSrv.products[productId])){
+                        // if (_isValidProduct(iapSrv.products[productId])){
                             return iapSrv.products[productId];    
-                        }
-                        else{
-                            return null;
-                        }
+                        // }
+                        // else{
+                        //     return null;
+                        // }
                     });
                 };
 
@@ -289,9 +283,9 @@
                         }
                         else{
                             for(var propertyName in iapSrv.products) {
-                                if (_isValidProduct(iapSrv.products[propertyName])){
+                                // if (_isValidProduct(iapSrv.products[propertyName])){
                                     storeProductsArr.push(angular.copy(iapSrv.products[propertyName]));
-                                }
+                                // }
                             }
                         }
                         return storeProductsArr;
@@ -512,17 +506,32 @@
                                             callback(true,res.data.data);
                                         }
                                         else{
-                                            callback(false, {error: { code: iapSrv.IapErrorCodeEnum.RECIPT_NOT_APPROVED , message: 'recipt not approved' }});
+                                            if (product.type === $window.store.PAID_SUBSCRIPTION){
+                                                callback(false, {code: $window.store.PURCHASE_EXPIRED, error: { code: iapSrv.IapErrorCodeEnum.RECIPT_NOT_APPROVED , message: 'recipt not approved' }});
+                                            }
+                                            else{
+                                                callback(false, {error: { code: iapSrv.IapErrorCodeEnum.RECIPT_NOT_APPROVED , message: 'recipt not approved' }});
+                                            }
                                         }
                                     })
                                     .catch(function(err){
                                         console.error('error in verifyRecieptProm validator: ' + err);
-                                        callback(false, {error: { code: iapSrv.IapErrorCodeEnum.VALIDATOR_ERROR , message: err }});
+                                        if (product.type === $window.store.PAID_SUBSCRIPTION){
+                                            callback(false, {code: $window.store.PURCHASE_EXPIRED, error: { code: iapSrv.IapErrorCodeEnum.RECIPT_NOT_APPROVED , message: 'recipt not approved' }});
+                                        }
+                                        else{
+                                            callback(false, {error: { code: iapSrv.IapErrorCodeEnum.RECIPT_NOT_APPROVED , message: 'recipt not approved' }});
+                                        }
                                     });                                    
                                 }
                                 else{
                                     console.log('no transaction in validator');
-                                    callback(false, {error: { code: iapSrv.IapErrorCodeEnum.VALIDATOR_NO_TRANSACTION , message: 'no transaction' }});
+                                    if (product.type === $window.store.PAID_SUBSCRIPTION){
+                                        callback(false, {code: $window.store.PURCHASE_EXPIRED, error: { code: iapSrv.IapErrorCodeEnum.VALIDATOR_NO_TRANSACTION , message: 'no transaction in validator' }});
+                                    }
+                                    else{
+                                        callback(false, {error: { code: iapSrv.IapErrorCodeEnum.VALIDATOR_NO_TRANSACTION , message: 'no transaction in validator' }});
+                                    }
                                 }
                             };
 
@@ -568,6 +577,10 @@
                                 $window.store.when(appProduct.id).approved(function(product){
                                     purchaseApproved(product);
                                 });
+
+                                $window.store.when($window.store.PAID_SUBSCRIPTION).updated(function (product) {
+                                    console.log('---------- proudctId:' + product.id + ',owned:' + product.owned);
+                                 });
                             });
 
                             /////////////////////////////

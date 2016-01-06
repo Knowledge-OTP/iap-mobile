@@ -84,15 +84,9 @@
                     }
                 };
 
-                function _isValidProduct(product){
-                    if (product && product.title && product.price){
-                        return true;
-                    }
-                    else{
-                        return false;
-                    }
-
-                }
+                // function _isValidProduct(product){
+                //     return (product && product.title && product.price){
+                // }
 
                 function _verifyReciept(transaction){
 
@@ -396,7 +390,7 @@
                                             callback(true,res.data.data);
                                         }
                                         else{
-                                            if (product.type === $window.store.PAID_SUBSCRIPTION.){
+                                            if (product.type === $window.store.PAID_SUBSCRIPTION){
                                                 callback(false, {code: $window.store.PURCHASE_EXPIRED, error: { code: iapSrv.IapErrorCodeEnum.RECIPT_NOT_APPROVED , message: 'recipt not approved' }});
                                             }
                                             else{
@@ -406,7 +400,7 @@
                                     })
                                     .catch(function(err){
                                         console.error('error in verifyRecieptProm validator: ' + err);
-                                        if (product.type === $window.store.PAID_SUBSCRIPTION.){
+                                        if (product.type === $window.store.PAID_SUBSCRIPTION){
                                             callback(false, {code: $window.store.PURCHASE_EXPIRED, error: { code: iapSrv.IapErrorCodeEnum.RECIPT_NOT_APPROVED , message: 'recipt not approved' }});
                                         }
                                         else{
@@ -416,7 +410,7 @@
                                 }
                                 else{
                                     console.log('no transaction in validator');
-                                    if (product.type === $window.store.PAID_SUBSCRIPTION.){
+                                    if (product.type === $window.store.PAID_SUBSCRIPTION){
                                         callback(false, {code: $window.store.PURCHASE_EXPIRED, error: { code: iapSrv.IapErrorCodeEnum.VALIDATOR_NO_TRANSACTION , message: 'no transaction in validator' }});
                                     }
                                     else{
