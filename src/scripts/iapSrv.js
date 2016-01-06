@@ -396,17 +396,32 @@
                                             callback(true,res.data.data);
                                         }
                                         else{
-                                            callback(false, {error: { code: iapSrv.IapErrorCodeEnum.RECIPT_NOT_APPROVED , message: 'recipt not approved' }});
+                                            if (product.type === $window.store.PAID_SUBSCRIPTION.){
+                                                callback(false, {code: $window.store.PURCHASE_EXPIRED, error: { code: iapSrv.IapErrorCodeEnum.RECIPT_NOT_APPROVED , message: 'recipt not approved' }});
+                                            }
+                                            else{
+                                                callback(false, {error: { code: iapSrv.IapErrorCodeEnum.RECIPT_NOT_APPROVED , message: 'recipt not approved' }});
+                                            }
                                         }
                                     })
                                     .catch(function(err){
                                         console.error('error in verifyRecieptProm validator: ' + err);
-                                        callback(false, {error: { code: iapSrv.IapErrorCodeEnum.VALIDATOR_ERROR , message: err }});
+                                        if (product.type === $window.store.PAID_SUBSCRIPTION.){
+                                            callback(false, {code: $window.store.PURCHASE_EXPIRED, error: { code: iapSrv.IapErrorCodeEnum.RECIPT_NOT_APPROVED , message: 'recipt not approved' }});
+                                        }
+                                        else{
+                                            callback(false, {error: { code: iapSrv.IapErrorCodeEnum.RECIPT_NOT_APPROVED , message: 'recipt not approved' }});
+                                        }
                                     });                                    
                                 }
                                 else{
                                     console.log('no transaction in validator');
-                                    callback(false, {error: { code: iapSrv.IapErrorCodeEnum.VALIDATOR_NO_TRANSACTION , message: 'no transaction' }});
+                                    if (product.type === $window.store.PAID_SUBSCRIPTION.){
+                                        callback(false, {code: $window.store.PURCHASE_EXPIRED, error: { code: iapSrv.IapErrorCodeEnum.VALIDATOR_NO_TRANSACTION , message: 'no transaction in validator' }});
+                                    }
+                                    else{
+                                        callback(false, {error: { code: iapSrv.IapErrorCodeEnum.VALIDATOR_NO_TRANSACTION , message: 'no transaction in validator' }});
+                                    }
                                 }
                             };
 
@@ -452,6 +467,10 @@
                                 $window.store.when(appProduct.id).approved(function(product){
                                     purchaseApproved(product);
                                 });
+
+                                $window.store.when($window.store.PAID_SUBSCRIPTION).updated(function (product) {
+                                    console.log('---------- proudctId:' + product.id + ',owned:' + product.owned);
+                                 });
                             });
 
                             /////////////////////////////
